@@ -15,6 +15,7 @@ SlashCmdList.BOOKSONMAP = function(msg)
   elseif cmd == "minimap" then
     db.hideMinimap = not db.hideMinimap
     ns.UpdateMinimapButton()
+    ns.RefreshOptions()
   elseif (cmd == "undo" or cmd == "done") and BOOKS[tonumber(rest) or 0] then
     ns.SetDone(BOOKS[tonumber(rest)], cmd == "done")
   elseif cmd == "route" then

@@ -1,6 +1,7 @@
 -- Books on map (Forever): optimized collection route (nearest neighbor + 2-opt, from the player's position)
 local _, ns = ...
 local L = ns.L
+local S = ns.Skin
 local BOOKS = ns.BOOKS
 
 local CONTINENT_PENALTY = 20000 -- yards added for every boat/zeppelin trip between continents
@@ -8,18 +9,7 @@ local route = {}                -- { {book = b, loc = loc, cont = id, x = wx, y 
 local skipped = {}              -- book keys skipped for this session
 local tracker
 
--- World position (continentID, x, y in yards) of a map position (0-1)
-local function worldPos(mapID, x, y)
-  if not (C_Map and C_Map.GetWorldPosFromMapPos and CreateVector2D) then return end
-  local cont, pos = C_Map.GetWorldPosFromMapPos(mapID, CreateVector2D(x, y))
-  if cont and pos then return cont, pos.x, pos.y end
-end
-
-local function playerPos()
-  local mapID = C_Map.GetBestMapForUnit("player")
-  local p = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
-  if p then return worldPos(mapID, p.x, p.y) end
-end
+local worldPos, playerPos = ns.WorldPos, ns.PlayerWorldPos
 
 local function cost(a, b)
   local d = math.sqrt((a.x - b.x) ^ 2 + (a.y - b.y) ^ 2)
@@ -124,7 +114,7 @@ local function updateTracker()
     tracker.arrow:Hide()
     return
   end
-  tracker.name:SetText(("|cffffd100%d/%d|r  %s"):format(1, #route, s.book.name))
+  tracker.name:SetText(("|cff5cc8ff%d/%d|r  %s"):format(1, #route, s.book.name))
   tracker.where:SetText(("%s  |cff808080(%.1f, %.1f)|r"):format(s.loc[4], s.loc[2], s.loc[3]))
   local cont, px, py = playerPos()
   if cont and cont == s.cont then
@@ -144,70 +134,64 @@ local function updateTracker()
 end
 
 local function smallButton(parent, text, onClick)
-  local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-  b:SetSize(62, 20)
-  b:SetText(text)
-  b:SetScript("OnClick", onClick)
-  return b
+  return S.Button(parent, text, 66, 20, onClick)
 end
 
 local function createTracker()
-  local f = CreateFrame("Frame", "BooksOnMapForeverRoute", UIParent, "BackdropTemplate")
-  f:SetSize(270, 78)
-  f:SetBackdrop({ bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 14, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
-  f:SetBackdropColor(0, 0, 0, 0.75)
-  f:SetMovable(true)
-  f:EnableMouse(true)
-  f:RegisterForDrag("LeftButton")
+  local f = CreateFrame("Frame", "BooksOnMapForeverRoute", UIParent)
+  f:SetSize(290, 96)
+  S.Shadow(f, 12, 0.5, { 0.12, 0.4, 0.95 })
+  S.Rounded(f, 12)
+  S.EdgeGlow(f, 48, 0.15)
   f:SetClampedToScreen(true)
-  f:SetScript("OnDragStart", f.StartMoving)
-  f:SetScript("OnDragStop", function(self)
-    self:StopMovingOrSizing()
+  S.Draggable(f, f, function(self)
     local p, _, rp, x, y = self:GetPoint()
     ns.db.routePos = { p, rp, x, y }
   end)
   local pos = ns.db.routePos
   if pos then f:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4]) else f:SetPoint("TOP", 0, -120) end
 
-  local icon = f:CreateTexture(nil, "ARTWORK")
-  icon:SetSize(32, 32)
-  icon:SetPoint("TOPLEFT", 8, -8)
-  f.icon = icon
+  -- accent strip on the left edge
+  local strip = f:CreateTexture(nil, "ARTWORK")
+  strip:SetPoint("TOPLEFT", 1, -12)
+  strip:SetPoint("BOTTOMLEFT", 1, 12)
+  strip:SetWidth(2)
+  strip:SetColorTexture(S.Color(S.C.accent))
+
+  local icon = S.Icon(f, 34)
+  icon:SetPoint("TOPLEFT", 14, -12)
+  f.icon = icon.tex
 
   f.arrow = f:CreateTexture(nil, "ARTWORK")
   f.arrow:SetTexture("Interface\\Minimap\\MinimapArrow")
-  f.arrow:SetSize(32, 32)
-  f.arrow:SetPoint("TOPRIGHT", -8, -6)
+  f.arrow:SetSize(30, 30)
+  f.arrow:SetPoint("TOPRIGHT", -14, -8)
 
-  f.name = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  f.name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 6, 0)
+  f.name = S.Text(f, 13)
+  f.name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 9, -1)
   f.name:SetPoint("RIGHT", f.arrow, "LEFT", -4, 0)
-  f.name:SetJustifyH("LEFT")
   f.name:SetWordWrap(false)
 
-  f.where = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  f.where:SetPoint("TOPLEFT", f.name, "BOTTOMLEFT", 0, -3)
+  f.where = S.Text(f, 11, "muted")
+  f.where:SetPoint("TOPLEFT", f.name, "BOTTOMLEFT", 0, -4)
   f.where:SetPoint("RIGHT", f.arrow, "LEFT", -4, 0)
-  f.where:SetJustifyH("LEFT")
   f.where:SetWordWrap(false)
 
-  f.dist = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  f.dist:SetPoint("TOPRIGHT", f.arrow, "BOTTOMRIGHT", 0, -1)
+  f.dist = S.Text(f, 11, "accent")
+  f.dist:SetPoint("TOPRIGHT", f.arrow, "BOTTOMRIGHT", 0, -2)
   f.dist:SetJustifyH("RIGHT")
 
   local skip = smallButton(f, L["Skip"], function()
     if route[1] then skipped[route[1].book.key] = true end
     ns.RefreshRoute(true)
   end)
-  skip:SetPoint("BOTTOMLEFT", 8, 7)
+  skip:SetPoint("BOTTOMLEFT", 14, 12)
   local recalc = smallButton(f, L["Recalc"], function() wipe(skipped); ns.RefreshRoute(true) end)
   recalc:SetPoint("LEFT", skip, "RIGHT", 4, 0)
   local tt = smallButton(f, "TomTom", sendToTomTom)
   tt:SetPoint("LEFT", recalc, "RIGHT", 4, 0)
-  local close = smallButton(f, "X", function() ns.ToggleRoute(false) end)
-  close:SetWidth(24)
-  close:SetPoint("BOTTOMRIGHT", -8, 7)
+  local close = S.CloseButton(f, function() ns.ToggleRoute(false) end)
+  close:SetPoint("BOTTOMRIGHT", -10, 11)
 
   local elapsed = 0
   f:SetScript("OnUpdate", function(_, e)

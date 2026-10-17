@@ -2,9 +2,10 @@
 local ADDON, ns = ...
 local L = ns.L
 local BOOKS = ns.BOOKS
+local S = ns.Skin
 
-local WIDTH, HEIGHT = 470, 600
-local ROW_H, HEADER_H = 34, 26
+local WIDTH, HEIGHT = 470, 760
+local ROW_H, HEADER_H = 36, 26
 local GOAL_NECKLACE, GOAL_RING, GOAL_25 = 10, 20, 25
 
 local SETS = {
@@ -14,16 +15,43 @@ local SETS = {
   { id = 60, label = "Level 60 set" },
 }
 
-local LANGUAGES = {
-  { value = "auto", text = "Automatic (game language)" },
-  { value = "enUS", text = "English" },
-  { value = "frFR", text = "Français" },
-}
-
 local frame
+local layoutList
 
 local function iconPath(b)
   return "Interface\\Icons\\" .. (b.icon or "INV_Misc_Book_09")
+end
+
+-- list layout: filtered rows are hidden, the rest stacked in their set's body, which is
+-- squeezed by its fold animation (h.foldShown: 1 open, 0 folded)
+layoutList = function()
+  local level = UnitLevel("player")
+  local y = 0
+  for _, h in ipairs(frame.headers) do
+    local visible = not ns.db.myLevelOnly or h.set <= level
+    h:SetShown(visible)
+    h.body:SetShown(visible)
+    if visible then
+      h:SetPoint("TOPLEFT", 0, -y)
+      y = y + HEADER_H + 2
+      local inner = 0
+      for _, row in ipairs(h.rows) do
+        local show = not (ns.db.hideCollected and ns.IsDone(row.book))
+        row:SetShown(show)
+        if show then
+          row:SetPoint("TOPLEFT", 0, -inner)
+          inner = inner + ROW_H
+        end
+      end
+      local p = h.foldShown()
+      h.body:SetPoint("TOPLEFT", 0, -y)
+      h.body:SetHeight(math.max(0.01, inner * p))
+      h.body:SetAlpha(p)
+      if p < 0.01 then h.body:Hide() end
+      y = y + inner * p + 8
+    end
+  end
+  frame.content:SetHeight(math.max(y, 1))
 end
 
 function ns.RefreshOptions()
@@ -32,12 +60,16 @@ function ns.RefreshOptions()
 
   frame.bar:SetValue(math.min(done, GOAL_25))
   frame.barText:SetText(L["%d / %d books"]:format(done, #BOOKS))
-  frame.necklace:SetTextColor(done >= GOAL_NECKLACE and 0.1 or 0.6, done >= GOAL_NECKLACE and 1 or 0.6, done >= GOAL_NECKLACE and 0.1 or 0.6)
-  frame.ring:SetTextColor(done >= GOAL_RING and 0.1 or 0.6, done >= GOAL_RING and 1 or 0.6, done >= GOAL_RING and 0.1 or 0.6)
-  frame.goal25:SetTextColor(done >= GOAL_25 and 0.1 or 0.6, done >= GOAL_25 and 1 or 0.6, done >= GOAL_25 and 0.1 or 0.6)
+  for _, t in ipairs({ { frame.necklace, GOAL_NECKLACE }, { frame.ring, GOAL_RING }, { frame.goal25, GOAL_25 } }) do
+    t[1]:SetTextColor(S.Color(done >= t[2] and S.C.good or S.C.muted))
+  end
 
   frame.showAll:SetChecked(not ns.db.hidden)
   frame.size:SetValue(ns.db.pinSize or ns.DEFAULT_PIN_SIZE)
+  frame.showMinimap:SetChecked(not ns.db.hideMinimapPins)
+  frame.showButton:SetChecked(not ns.db.hideMinimap)
+  frame.minimapSize:SetValue(ns.db.minimapPinSize or ns.DEFAULT_MINIMAP_PIN_SIZE)
+  frame.lang.Refresh()
 
   for _, h in ipairs(frame.headers) do
     local n, total = 0, 0
@@ -52,44 +84,19 @@ function ns.RefreshOptions()
 
   frame.hideDone:SetChecked(ns.db.hideCollected)
   frame.myLevel:SetChecked(ns.db.myLevelOnly)
+  frame.groupBooks:SetChecked(not ns.db.hideGroupBooks)
 
-  -- layout: filtered rows are hidden, the rest stacked under their header
-  local level = UnitLevel("player")
-  local y = 0
-  for _, h in ipairs(frame.headers) do
-    local visible = not ns.db.myLevelOnly or h.set <= level
-    h:SetShown(visible)
-    if visible then
-      h:SetPoint("TOPLEFT", 0, -y)
-      y = y + HEADER_H + 2
-    end
-    for _, row in ipairs(frame.rows) do
-      if row.book.set == h.set then
-        local show = visible and not (ns.db.hideCollected and ns.IsDone(row.book))
-        row:SetShown(show)
-        if show then
-          row:SetPoint("TOPLEFT", 0, -y)
-          y = y + ROW_H
-        end
-      end
-    end
-    if visible then y = y + 6 end
-  end
-  frame.content:SetHeight(math.max(y, 1))
+  layoutList()
 
   for _, row in ipairs(frame.rows) do
     local isDone = ns.IsDone(row.book)
-    row.check:SetChecked(not isDone)
+    row.check:SetChecked(isDone)
     row.icon:SetDesaturated(isDone)
     row.icon:SetAlpha(isDone and 0.5 or 1)
-    if isDone then
-      row.name:SetTextColor(0.5, 0.5, 0.5)
-      row.done:Show()
-    else
-      row.name:SetTextColor(1, 0.82, 0)
-      row.done:Hide()
-    end
+    row.name:SetTextColor(S.Color(isDone and S.C.muted or S.C.text))
   end
+  ns.RefreshRewards()
+  ns.RefreshGroupPanel()
 end
 
 -- Rows -------------------------------------------------------------------
@@ -100,6 +107,7 @@ local function rowTooltip(self)
   for _, loc in ipairs(b.locs) do
     GameTooltip:AddLine(("%s (%.1f, %.1f)"):format(loc[4], loc[2], loc[3]), 1, 1, 1, true)
   end
+  ns.AddGroupTooltip(b)
   GameTooltip:AddLine(" ")
   GameTooltip:AddLine(L["Click: open the map there"], 0.5, 1, 0.5)
   if TomTom then GameTooltip:AddLine(L["Right-click: TomTom waypoint"], 0.5, 1, 0.5) end
@@ -113,47 +121,33 @@ local function createRow(parent, b, y, width)
   row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
   row.book = b
 
-  local hl = row:CreateTexture(nil, "HIGHLIGHT")
-  hl:SetAllPoints()
-  hl:SetColorTexture(1, 1, 1, 0.08)
+  local icon = S.Icon(row, 26)
+  icon:SetPoint("LEFT", 8, 0)
+  icon.tex:SetTexture(iconPath(b))
+  row.icon = icon.tex
 
-  row.icon = row:CreateTexture(nil, "ARTWORK")
-  row.icon:SetSize(26, 26)
-  row.icon:SetPoint("LEFT", 6, 0)
-  row.icon:SetTexture(iconPath(b))
-  row.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-
-  row.done = row:CreateTexture(nil, "OVERLAY")
-  row.done:SetSize(18, 18)
-  row.done:SetPoint("BOTTOMRIGHT", row.icon, "BOTTOMRIGHT", 5, -4)
-  row.done:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-
-  row.check = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
-  row.check:SetSize(24, 24)
-  row.check:SetPoint("RIGHT", -4, 0)
-  row.check:SetScript("OnClick", function(self) ns.SetDone(b, not self:GetChecked(), true) end)
-  row.check:SetScript("OnEnter", function(self)
+  row.check = S.Check(row, nil, 16)
+  row.check:SetPoint("RIGHT", -10, 0)
+  row.check:SetScript("OnClick", function(self) ns.SetDone(b, self:GetChecked(), true) end)
+  row.check:HookScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(L["Show on the map"])
+    GameTooltip:AddLine(L["Collected (hidden from the map)"])
     GameTooltip:Show()
   end)
-  row.check:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  row.check:HookScript("OnLeave", function() GameTooltip:Hide() end)
 
-  row.name = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 8, 1)
-  row.name:SetPoint("RIGHT", row.check, "LEFT", -4, 0)
-  row.name:SetJustifyH("LEFT")
+  row.name = S.Text(row, 13)
+  row.name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 9, 0)
+  row.name:SetPoint("RIGHT", row.check, "LEFT", -8, 0)
   row.name:SetWordWrap(false)
   row.name:SetText(b.name)
 
   local l = b.locs[1]
-  row.where = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  row.where:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", 8, 0)
-  row.where:SetPoint("RIGHT", row.check, "LEFT", -4, 0)
-  row.where:SetJustifyH("LEFT")
+  row.where = S.Text(row, 11, "muted")
+  row.where:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 9, 0)
+  row.where:SetPoint("RIGHT", row.check, "LEFT", -8, 0)
   row.where:SetWordWrap(false)
-  row.where:SetTextColor(0.65, 0.65, 0.65)
-  row.where:SetText(l and ("%s  |cff808080(%.1f, %.1f)|r"):format(l[4], l[2], l[3]) or L["location unknown"])
+  row.where:SetText(l and ("%s  |cff56647d%.1f, %.1f|r"):format(l[4], l[2], l[3]) or L["location unknown"])
 
   row:SetScript("OnClick", function(self, button)
     if button == "RightButton" then
@@ -165,6 +159,7 @@ local function createRow(parent, b, y, width)
   end)
   row:SetScript("OnEnter", rowTooltip)
   row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  S.RowHighlight(row)
   return row
 end
 
@@ -173,147 +168,61 @@ local function createHeader(parent, set, y, width)
   h:SetSize(width, HEADER_H)
   h:SetPoint("TOPLEFT", 0, -y)
   h.set = set.id
+  local wash = h:CreateTexture(nil, "BACKGROUND")
+  wash:SetAllPoints()
+  S.Gradient(wash, { 0.30, 0.55, 0.88, 0.22 }, { 0.30, 0.55, 0.88, 0 }, true)
+  local line = h:CreateTexture(nil, "BORDER")
+  line:SetPoint("BOTTOMLEFT"); line:SetPoint("BOTTOMRIGHT"); line:SetHeight(1)
+  S.Gradient(line, { 0.30, 0.55, 0.88, 0.8 }, { 0.30, 0.55, 0.88, 0 }, true)
 
-  local bg = h:CreateTexture(nil, "BACKGROUND")
-  bg:SetAllPoints()
-  bg:SetColorTexture(1, 0.82, 0, 0.12)
+  local accent = h:CreateTexture(nil, "ARTWORK")
+  accent:SetPoint("TOPLEFT"); accent:SetPoint("BOTTOMLEFT"); accent:SetWidth(2)
+  accent:SetColorTexture(S.Color(S.C.accent))
 
-  local line = h:CreateTexture(nil, "ARTWORK")
-  line:SetHeight(1)
-  line:SetPoint("BOTTOMLEFT")
-  line:SetPoint("BOTTOMRIGHT")
-  line:SetColorTexture(1, 0.82, 0, 0.5)
-
-  h.label = h:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  h.label:SetPoint("LEFT", 8, 0)
+  h.label = S.Text(h, 13, "accent", "extrabold")
+  h.label:SetPoint("LEFT", 10, 0)
   h.label:SetText(L[set.label])
 
-  h.count = h:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  h.count = S.Text(h, 11, "muted")
   h.count:SetPoint("RIGHT", -10, 0)
+
+  -- the set's books live in a clipped body that folds with the header
+  h.body = CreateFrame("Frame", nil, parent)
+  h.body:SetWidth(width)
+  if h.body.SetClipsChildren then pcall(h.body.SetClipsChildren, h.body, true) end
+  h.rows = {}
+  ns.db.foldedSets = ns.db.foldedSets or {}
+  S.Foldable(h, function() return not ns.db.foldedSets[set.id] end,
+    function(open) ns.db.foldedSets[set.id] = not open or nil end,
+    function() if frame and frame.headers then layoutList() end end, h.count)
   return h
 end
 
 -- Window -----------------------------------------------------------------
-local function createButton(parent, text, onClick)
-  local btn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-  btn:SetSize(130, 24)
-  btn:SetText(text)
-  btn:SetScript("OnClick", onClick)
-  return btn
-end
+local PAD = 16
 
 local function create()
-  local f = CreateFrame("Frame", "BooksOnMapForeverOptions", UIParent, "BackdropTemplate")
-  f:SetSize(WIDTH, HEIGHT)
+  local f = S.Window("BooksOnMapForeverOptions", UIParent, WIDTH, HEIGHT, "Books on map")
   f:SetPoint("CENTER")
   f:SetFrameStrata("DIALOG")
-  f:SetMovable(true)
-  f:EnableMouse(true)
-  f:RegisterForDrag("LeftButton")
-  f:SetScript("OnDragStart", f.StartMoving)
-  f:SetScript("OnDragStop", f.StopMovingOrSizing)
-  f:SetClampedToScreen(true)
-  f:SetBackdrop({
-    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
-    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
-    tile = true, tileSize = 32, edgeSize = 24,
-    insets = { left = 6, right = 6, top = 6, bottom = 6 },
-  })
+  S.Draggable(f, f.titleBar)
   tinsert(UISpecialFrames, f:GetName()) -- close with Escape
 
-  local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-  close:SetPoint("TOPRIGHT", -4, -4)
-
-  -- Header: addon icon + title
-  local logo = f:CreateTexture(nil, "ARTWORK")
-  logo:SetSize(40, 40)
-  logo:SetPoint("TOPLEFT", 16, -14)
+  -- Title bar: addon icon, title, version, language
+  local logo = f.titleBar:CreateTexture(nil, "ARTWORK")
+  logo:SetSize(20, 20)
+  logo:SetPoint("LEFT", 10, 0)
   logo:SetTexture(ns.ADDON_ICON)
+  f.title:SetPoint("LEFT", logo, "RIGHT", 8, 0)
 
-  local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-  title:SetPoint("TOPLEFT", logo, "TOPRIGHT", 10, -4)
-  title:SetText("Books on map (Forever)")
+  local forever = S.Text(f.titleBar, 15, "accent")
+  forever:SetPoint("LEFT", f.title, "RIGHT", 5, 0)
+  forever:SetText("Forever")
 
-  local version = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-  version:SetPoint("BOTTOMLEFT", title, "BOTTOMRIGHT", 6, 1)
+  local version = S.Text(f.titleBar, 11, "muted")
+  version:SetPoint("BOTTOMLEFT", forever, "BOTTOMRIGHT", 6, 1)
   local getMeta = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
   version:SetText("v" .. (getMeta(ADDON, "Version") or "?"))
-
-  local sub = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
-  sub:SetTextColor(0.7, 0.7, 0.7)
-  sub:SetText(L["Library books of WoW Forever"])
-
-  -- Progress bar (toward the 25-book reward)
-  f.bar = CreateFrame("StatusBar", nil, f)
-  f.bar:SetPoint("TOPLEFT", 18, -66)
-  f.bar:SetPoint("TOPRIGHT", -18, -66)
-  f.bar:SetHeight(16)
-  f.bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-  f.bar:SetStatusBarColor(0.85, 0.65, 0.1)
-  f.bar:SetMinMaxValues(0, GOAL_25)
-  local barBg = f.bar:CreateTexture(nil, "BACKGROUND")
-  barBg:SetAllPoints()
-  barBg:SetColorTexture(0, 0, 0, 0.6)
-  -- markers at the necklace and ring goals
-  for _, goal in ipairs({ GOAL_NECKLACE, GOAL_RING }) do
-    local mark = f.bar:CreateTexture(nil, "OVERLAY")
-    mark:SetSize(2, 16)
-    mark:SetColorTexture(1, 1, 1, 0.7)
-    mark:SetPoint("LEFT", f.bar, "LEFT", (WIDTH - 36) * goal / GOAL_25, 0)
-  end
-  f.barText = f.bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  f.barText:SetPoint("CENTER")
-
-  f.necklace = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  f.necklace:SetPoint("TOPLEFT", f.bar, "BOTTOMLEFT", 0, -4)
-  f.necklace:SetText(L["10 books: necklace"])
-  f.ring = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  f.ring:SetPoint("TOP", f.bar, "BOTTOM", 0, -4)
-  f.ring:SetText(L["20 books: ring"])
-  f.goal25 = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  f.goal25:SetPoint("TOPRIGHT", f.bar, "BOTTOMRIGHT", 0, -4)
-  f.goal25:SetText(L["25 books: bow, crest or light"])
-
-  -- Settings: show icons + icon size
-  f.showAll = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
-  f.showAll:SetSize(26, 26)
-  f.showAll:SetPoint("TOPLEFT", 14, -104)
-  f.showAll.text = f.showAll:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  f.showAll.text:SetPoint("LEFT", f.showAll, "RIGHT", 2, 0)
-  f.showAll.text:SetText(L["Show on the map"])
-  f.showAll:SetScript("OnClick", function(self) ns.db.hidden = not self:GetChecked(); ns.Refresh() end)
-
-  f.size = CreateFrame("Slider", "BooksOnMapForeverSizeSlider", f, "OptionsSliderTemplate")
-  f.size:SetPoint("TOPRIGHT", -24, -112)
-  f.size:SetWidth(170)
-  f.size:SetMinMaxValues(10, 40)
-  f.size:SetValueStep(1)
-  if f.size.SetObeyStepOnDrag then f.size:SetObeyStepOnDrag(true) end
-  _G[f.size:GetName() .. "Low"]:SetText("10")
-  _G[f.size:GetName() .. "High"]:SetText("40")
-  f.size:SetScript("OnValueChanged", function(self, value)
-    value = math.floor(value + 0.5)
-    _G[self:GetName() .. "Text"]:SetText(L["Map icon size: %d"]:format(value))
-    if ns.db.pinSize ~= value then
-      ns.db.pinSize = value
-      ns.RefreshMap()
-    end
-  end)
-
-  -- Filters
-  local function filterCheck(label, key, anchor, x)
-    local c = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
-    c:SetSize(24, 24)
-    c:SetPoint("TOPLEFT", x, -136)
-    c.text = c:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    c.text:SetPoint("LEFT", c, "RIGHT", 2, 0)
-    c.text:SetText(label)
-    c:SetScript("OnClick", function(self) ns.db[key] = self:GetChecked() or nil; ns.RefreshOptions() end)
-    return c
-  end
-  f.hideDone = filterCheck(L["Hide collected books"], "hideCollected", nil, 14)
-  f.myLevel = filterCheck(L["Only sets for my level"], "myLevelOnly", nil, 230)
 
   -- Language (reloads the UI: names are localized at load)
   StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD = {
@@ -322,81 +231,161 @@ local function create()
     OnAccept = function(_, lang) ns.db.lang = lang; ReloadUI() end,
     timeout = 0, whileDead = true, hideOnEscape = true,
   }
-  local langLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-  langLabel:SetText(L["Language"])
-  local lang = CreateFrame("Frame", "BooksOnMapForeverLangDropDown", f, "UIDropDownMenuTemplate")
-  lang:SetPoint("TOPRIGHT", -18, -34)
-  langLabel:SetPoint("BOTTOMLEFT", lang, "TOPLEFT", 20, 0)
-  UIDropDownMenu_SetWidth(lang, 90)
-  local function current()
-    local v = ns.db.lang or "auto"
-    for _, o in ipairs(LANGUAGES) do if o.value == v then return L[o.text] end end
-  end
-  UIDropDownMenu_Initialize(lang, function()
-    for _, o in ipairs(LANGUAGES) do
-      local info = UIDropDownMenu_CreateInfo()
-      info.text, info.value = L[o.text], o.value
-      info.checked = (ns.db.lang or "auto") == o.value
-      info.func = function()
-        CloseDropDownMenus()
-        if (ns.db.lang or "auto") ~= o.value then
-          local d = StaticPopup_Show("BOOKSONMAPFOREVER_RELOAD")
-          if d then d.data = o.value end
-        end
-      end
-      UIDropDownMenu_AddButton(info)
+  f.lang = S.Segmented(f.titleBar, {
+    { "auto", L["Auto"], L["Automatic (game language)"] },
+    { "enUS", "EN", "English" },
+    { "frFR", "FR", "Français" },
+  }, 38, function() return ns.db.lang or "auto" end, function(value)
+    if (ns.db.lang or "auto") ~= value then
+      local d = StaticPopup_Show("BOOKSONMAPFOREVER_RELOAD")
+      if d then d.data = value end
     end
   end)
-  UIDropDownMenu_SetText(lang, current())
+  f.lang:SetPoint("RIGHT", f.close, "LEFT", -8, 0)
 
-  -- Book list (scrollable)
-  local listBg = CreateFrame("Frame", nil, f, "BackdropTemplate")
-  listBg:SetPoint("TOPLEFT", 14, -164)
-  listBg:SetPoint("BOTTOMRIGHT", -14, 48)
-  listBg:SetBackdrop({
-    bgFile = "Interface\\Buttons\\WHITE8x8",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    edgeSize = 12,
-    insets = { left = 3, right = 3, top = 3, bottom = 3 },
-  })
-  listBg:SetBackdropColor(0, 0, 0, 0.5)
-  listBg:SetBackdropBorderColor(0.6, 0.5, 0.2, 0.8)
+  -- Progress (toward the 25-book reward)
+  local progress = S.Section(f, L["Progress"])
+  progress:SetPoint("TOPLEFT", PAD, -48)
+  progress:SetPoint("TOPRIGHT", -PAD, -48)
+  f.barText = progress.right
 
-  local scroll = CreateFrame("ScrollFrame", "BooksOnMapForeverScroll", listBg, "UIPanelScrollFrameTemplate")
-  scroll:SetPoint("TOPLEFT", 6, -6)
-  scroll:SetPoint("BOTTOMRIGHT", -28, 6)
+  f.bar = S.ProgressBar(f, 12)
+  f.bar:SetPoint("TOPLEFT", progress, "BOTTOMLEFT", 0, -10)
+  f.bar:SetPoint("TOPRIGHT", progress, "BOTTOMRIGHT", 0, -10)
+  f.bar:SetMinMaxValues(0, GOAL_25)
+  -- markers at the necklace and ring goals
+  for _, goal in ipairs({ GOAL_NECKLACE, GOAL_RING }) do
+    local mark = f.bar:CreateTexture(nil, "OVERLAY")
+    mark:SetSize(2, 12)
+    mark:SetColorTexture(S.Color(S.C.bg))
+    mark:SetPoint("LEFT", f.bar, "LEFT", (WIDTH - 2 * PAD) * goal / GOAL_25 - 1, 0)
+  end
 
-  local contentWidth = WIDTH - 28 - 34
-  local content = CreateFrame("Frame", nil, scroll)
-  content:SetSize(contentWidth, 1)
-  scroll:SetScrollChild(content)
+  f.necklace = S.Text(f, 11)
+  f.necklace:SetPoint("TOPLEFT", f.bar, "BOTTOMLEFT", 0, -6)
+  f.necklace:SetText(L["10 books: necklace"])
+  f.ring = S.Text(f, 11)
+  f.ring:SetPoint("TOP", f.bar, "BOTTOM", 0, -6)
+  f.ring:SetText(L["20 books: ring"])
+  f.goal25 = S.Text(f, 11)
+  f.goal25:SetPoint("TOPRIGHT", f.bar, "BOTTOMRIGHT", 0, -6)
+  f.goal25:SetJustifyH("RIGHT")
+  f.goal25:SetText(L["25 books: bow, crest or light"])
+
+  -- Settings: show icons + icon size (world map, then minimap)
+  local settings = S.Section(f, L["Settings"])
+  settings:SetPoint("TOPLEFT", PAD, -116)
+  settings:SetPoint("TOPRIGHT", -PAD, -116)
+
+  -- folding: each section body slides closed, the book list takes the room
+  ns.db.folded = ns.db.folded or {}
+  local function section(key, header, height)
+    local body = CreateFrame("Frame", nil, f)
+    body:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, 0)
+    body:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", 0, 0)
+    S.Collapsible(header, body, height,
+      function() return not ns.db.folded[key] end,
+      function(open) ns.db.folded[key] = not open or nil end)
+    return body
+  end
+  local settingsBody = section("settings", settings, 100)
+
+  local function settingCheck(label, y, onClick)
+    local c = S.Check(settingsBody, label)
+    c:SetPoint("TOPLEFT", 0, y)
+    c:SetScript("OnClick", onClick)
+    return c
+  end
+
+  local function sizeSlider(y, min, max, label, key, default, refresh)
+    local s = S.Slider(settingsBody, 170, min, max, L[label], function(value)
+      if ns.db[key] ~= value then
+        ns.db[key] = value
+        refresh()
+      end
+    end)
+    s:SetPoint("TOPRIGHT", 0, y)
+    s.value:SetText(ns.db[key] or default)
+    return s
+  end
+
+  f.showAll = settingCheck(L["Show on the map"], -14, function(self)
+    ns.db.hidden = not self:GetChecked(); ns.Refresh()
+  end)
+  f.size = sizeSlider(-26, 10, 40, "Map icon size: %d", "pinSize", ns.DEFAULT_PIN_SIZE, ns.RefreshMap)
+
+  f.showMinimap = settingCheck(L["Show books on the minimap"], -52, function(self)
+    ns.db.hideMinimapPins = not self:GetChecked() or nil; ns.RefreshMinimapPins()
+  end)
+  f.minimapSize = sizeSlider(-64, 8, 30, "Minimap icon size: %d", "minimapPinSize", ns.DEFAULT_MINIMAP_PIN_SIZE, ns.RefreshMinimapPins)
+  f.showButton = settingCheck(L["Show the minimap button"], -78, function(self)
+    ns.db.hideMinimap = not self:GetChecked() or nil; ns.UpdateMinimapButton()
+  end)
+
+  -- Filters
+  local filters = S.Section(f, L["Filters"])
+  filters:SetPoint("TOPLEFT", settingsBody, "BOTTOMLEFT", 0, -8)
+  filters:SetPoint("TOPRIGHT", settingsBody, "BOTTOMRIGHT", 0, -8)
+  local filtersBody = section("filters", filters, 58)
+
+  local function filterCheck(label, key, x, y)
+    local c = S.Check(filtersBody, label)
+    c:SetPoint("TOPLEFT", x, y)
+    c:SetScript("OnClick", function(self) ns.db[key] = self:GetChecked() or nil; ns.RefreshOptions() end)
+    return c
+  end
+  f.hideDone = filterCheck(L["Hide collected books"], "hideCollected", 0, -10)
+  f.myLevel = filterCheck(L["Only sets for my level"], "myLevelOnly", WIDTH / 2 - PAD, -10)
+  f.groupBooks = filterCheck(L["Also show the books my group is missing"], "hideGroupBooks", 0, -34)
+  f.groupBooks:SetScript("OnClick", function(self)
+    ns.db.hideGroupBooks = not self:GetChecked() or nil; ns.Refresh()
+  end)
+
+  -- Book list (scrollable), right under the filters: grows when sections are folded
+  local listBg = CreateFrame("Frame", nil, f)
+  listBg:SetPoint("TOPLEFT", filtersBody, "BOTTOMLEFT", 0, -8)
+  listBg:SetPoint("BOTTOMRIGHT", -PAD, 54)
+  S.Box(listBg, { 0, 0, 0, 0.35 }, S.C.rule)
+
+  local scroll, content = S.Scroll(listBg)
+  scroll:SetPoint("TOPLEFT", 1, -1)
+  scroll:SetPoint("BOTTOMRIGHT", -12, 1)
+
+  local contentWidth = WIDTH - 2 * PAD - 13
+  content:SetWidth(contentWidth)
   f.content = content
 
   -- positions are set by RefreshOptions (filters)
   f.headers, f.rows = {}, {}
   for _, set in ipairs(SETS) do
-    f.headers[#f.headers + 1] = createHeader(content, set, 0, contentWidth)
+    local h = createHeader(content, set, 0, contentWidth)
+    f.headers[#f.headers + 1] = h
     for _, b in ipairs(BOOKS) do
       if b.set == set.id then
-        f.rows[#f.rows + 1] = createRow(content, b, 0, contentWidth)
+        local row = createRow(h.body, b, 0, contentWidth)
+        f.rows[#f.rows + 1] = row
+        h.rows[#h.rows + 1] = row
       end
     end
   end
 
   -- Footer
-  local showBtn = createButton(f, L["Show all"], function() ns.SetAll(false) end)
-  showBtn:SetPoint("BOTTOMLEFT", 16, 16)
-  local hideBtn = createButton(f, L["Hide all"], function() ns.SetAll(true) end)
+  local showBtn = S.Button(f, L["Show all"], 120, 26, function() ns.SetAll(false) end)
+  showBtn:SetPoint("BOTTOMLEFT", PAD, 14)
+  local hideBtn = S.Button(f, L["Hide all"], 120, 26, function() ns.SetAll(true) end)
   hideBtn:SetPoint("LEFT", showBtn, "RIGHT", 8, 0)
-  local routeBtn = createButton(f, L["Optimized route"], function() ns.ToggleRoute() end)
-  routeBtn:SetPoint("BOTTOMRIGHT", -16, 16)
+  local routeBtn = S.Button(f, L["Optimized route"], 150, 26, function() ns.ToggleRoute() end, true)
+  routeBtn:SetPoint("BOTTOMRIGHT", -PAD, 14)
 
-  f:SetScript("OnShow", ns.RefreshOptions)
+  ns.CreateRewardsTab(f)
+  ns.CreateGroupTab(f)
+
+  f:HookScript("OnShow", ns.RefreshOptions)
   f:Hide()
   return f
 end
 
 function ns.ToggleOptions()
   frame = frame or create()
-  frame:SetShown(not frame:IsShown())
+  if frame:IsShown() then S.Close(frame) else frame:Show() end
 end
