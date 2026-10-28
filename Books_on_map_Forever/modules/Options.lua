@@ -6,7 +6,7 @@ local S = ns.Skin
 
 local WIDTH, HEIGHT = 470, 760
 local ROW_H, HEADER_H = 36, 26
-local GOAL_NECKLACE, GOAL_RING, GOAL_25 = 10, 20, 25
+local GOAL_NECKLACE, GOAL_RING, GOAL_25 = unpack(ns.GOALS)
 
 local SETS = {
   { id = 1, label = "Starting set" },
@@ -17,6 +17,73 @@ local SETS = {
 
 local frame
 local layoutList
+
+-- our popups go above the welcome page (FULLSCREEN_DIALOG); the shared popup frame is put back after
+local function raisePopup(self) self:SetFrameStrata("FULLSCREEN_DIALOG"); self:Raise() end
+local function lowerPopup(self) self:SetFrameStrata("DIALOG") end
+
+-- Language (reloads the UI: names are localized at load); also used by the welcome page
+StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD = {
+  text = L["The interface will be reloaded to apply the language."],
+  button1 = OKAY, button2 = CANCEL,
+  OnAccept = function(_, lang) ns.db.lang = lang; ReloadUI() end,
+  OnShow = raisePopup, OnHide = lowerPopup,
+  timeout = 0, whileDead = true, hideOnEscape = true,
+}
+
+-- Report a bug: the game can't open links, so the Discord invite is shown selected, ready to copy
+ns.DISCORD = "https://discord.com/invite/2WXxyC84NJ"
+StaticPopupDialogs.BOOKSONMAPFOREVER_BUG = {
+  text = L["Report a bug on Discord: press Ctrl+C to copy the link."],
+  button1 = CLOSE,
+  hasEditBox = true, editBoxWidth = 260,
+  OnShow = function(self)
+    raisePopup(self)
+    local box = self.editBox or self.EditBox or (self.GetEditBox and self:GetEditBox())
+    box:SetText(ns.DISCORD)
+    box:HighlightText()
+    box:SetFocus()
+    -- typing can't change the link
+    box:SetScript("OnTextChanged", function(b) if b:GetText() ~= ns.DISCORD then b:SetText(ns.DISCORD); b:HighlightText() end end)
+  end,
+  OnHide = function(self)
+    lowerPopup(self)
+    local box = self.editBox or self.EditBox or (self.GetEditBox and self:GetEditBox())
+    box:SetScript("OnTextChanged", nil)
+  end,
+  EditBoxOnEnterPressed = function(self) self:GetParent():Hide() end,
+  EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
+  timeout = 0, whileDead = true, hideOnEscape = true,
+}
+
+function ns.ReportBug() StaticPopup_Show("BOOKSONMAPFOREVER_BUG") end
+
+-- small title-bar button that opens the bug report popup
+function ns.BugButton(parent)
+  local b = S.Button(parent, "Bug", 34, 20, ns.ReportBug) -- narrow: the version text sits left of it
+  b:HookScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:AddLine(L["Report a bug"], 1, 1, 1)
+    GameTooltip:AddLine(L["Copy the link of the Discord server"], 0.5, 1, 0.5)
+    GameTooltip:Show()
+  end)
+  b:HookScript("OnLeave", function() GameTooltip:Hide() end)
+  return b
+end
+
+-- Auto / EN / FR pills; picking another language asks to reload
+function ns.LanguageSelector(parent)
+  return S.Segmented(parent, {
+    { "auto", L["Auto"], L["Automatic (game language)"] },
+    { "enUS", "EN", "English" },
+    { "frFR", "FR", "Français" },
+  }, 38, function() return ns.db.lang or "auto" end, function(value)
+    if (ns.db.lang or "auto") ~= value then
+      local d = StaticPopup_Show("BOOKSONMAPFOREVER_RELOAD")
+      if d then d.data = value end
+    end
+  end)
+end
 
 local function iconPath(b)
   return "Interface\\Icons\\" .. (b.icon or "INV_Misc_Book_09")
@@ -68,6 +135,7 @@ function ns.RefreshOptions()
   frame.size:SetValue(ns.db.pinSize or ns.DEFAULT_PIN_SIZE)
   frame.showMinimap:SetChecked(not ns.db.hideMinimapPins)
   frame.showButton:SetChecked(not ns.db.hideMinimap)
+  frame.toasts:SetChecked(not ns.db.noToasts)
   frame.minimapSize:SetValue(ns.db.minimapPinSize or ns.DEFAULT_MINIMAP_PIN_SIZE)
   frame.lang.Refresh()
 
@@ -224,24 +292,10 @@ local function create()
   local getMeta = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
   version:SetText("v" .. (getMeta(ADDON, "Version") or "?"))
 
-  -- Language (reloads the UI: names are localized at load)
-  StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD = {
-    text = L["The interface will be reloaded to apply the language."],
-    button1 = OKAY, button2 = CANCEL,
-    OnAccept = function(_, lang) ns.db.lang = lang; ReloadUI() end,
-    timeout = 0, whileDead = true, hideOnEscape = true,
-  }
-  f.lang = S.Segmented(f.titleBar, {
-    { "auto", L["Auto"], L["Automatic (game language)"] },
-    { "enUS", "EN", "English" },
-    { "frFR", "FR", "Français" },
-  }, 38, function() return ns.db.lang or "auto" end, function(value)
-    if (ns.db.lang or "auto") ~= value then
-      local d = StaticPopup_Show("BOOKSONMAPFOREVER_RELOAD")
-      if d then d.data = value end
-    end
-  end)
+  f.lang = ns.LanguageSelector(f.titleBar)
   f.lang:SetPoint("RIGHT", f.close, "LEFT", -8, 0)
+  local bug = ns.BugButton(f.titleBar)
+  bug:SetPoint("RIGHT", f.lang, "LEFT", -6, 0)
 
   -- Progress (toward the 25-book reward)
   local progress = S.Section(f, L["Progress"])
@@ -288,7 +342,7 @@ local function create()
       function(open) ns.db.folded[key] = not open or nil end)
     return body
   end
-  local settingsBody = section("settings", settings, 100)
+  local settingsBody = section("settings", settings, 124)
 
   local function settingCheck(label, y, onClick)
     local c = S.Check(settingsBody, label)
@@ -320,6 +374,9 @@ local function create()
   f.minimapSize = sizeSlider(-64, 8, 30, "Minimap icon size: %d", "minimapPinSize", ns.DEFAULT_MINIMAP_PIN_SIZE, ns.RefreshMinimapPins)
   f.showButton = settingCheck(L["Show the minimap button"], -78, function(self)
     ns.db.hideMinimap = not self:GetChecked() or nil; ns.UpdateMinimapButton()
+  end)
+  f.toasts = settingCheck(L["Notify when a book is collected"], -102, function(self)
+    ns.db.noToasts = not self:GetChecked() or nil
   end)
 
   -- Filters

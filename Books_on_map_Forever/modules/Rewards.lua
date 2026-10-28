@@ -117,7 +117,10 @@ local function createItem(parent, item, y)
   row:SetScript("OnClick", function(self)
     local _, link = getInfo(self.id)
     if not link then return end
-    if IsModifiedClick("CHATLINK") then ChatEdit_InsertLink(link)
+    if IsModifiedClick("CHATLINK") then
+      -- (ChatEdit_InsertLink is only a deprecation fallback on newer clients)
+      if ChatFrameUtil and ChatFrameUtil.InsertLink then ChatFrameUtil.InsertLink(link)
+      elseif ChatEdit_InsertLink then ChatEdit_InsertLink(link) end
     elseif IsModifiedClick("DRESSUP") then DressUpItemLink(link) end
   end)
   return row

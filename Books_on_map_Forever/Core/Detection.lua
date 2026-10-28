@@ -1,5 +1,6 @@
 -- Books on map (Forever): automatic detection (bags and library turn-ins)
 local _, ns = ...
+local L = ns.L
 local BOOKS = ns.BOOKS
 
 local function norm(s)
@@ -54,6 +55,34 @@ local function scanQuests()
   end
 end
 
+-- Item tooltips: "Library book - collected / missing (set)" -----------------
+local bookByItem = {}
+
+local function addBookLine(tt, link)
+  local b = link and bookByItem[tonumber(link:match("item:(%d+)"))]
+  if not b then return end
+  local set = b.set == 1 and L["Starting set"] or L[("Level %d set"):format(b.set)]
+  tt:AddLine(("|cff5cc8ff%s|r - %s |cff7f90ab(%s)|r"):format(L["Library book"],
+    ns.IsDone(b) and L["|cff00ff00collected|r"] or ("|cffff5555" .. L["missing"] .. "|r"), set))
+  tt:Show()
+end
+
+-- (at login: the other faction's books are already removed)
+local function hookTooltips()
+  for _, b in ipairs(BOOKS) do
+    if b.item then bookByItem[b.item] = b end
+  end
+  if TooltipDataProcessor and Enum and Enum.TooltipDataType then
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tt)
+      if tt.GetItem then addBookLine(tt, select(2, tt:GetItem())) end
+    end)
+    return
+  end
+  for _, tt in ipairs({ GameTooltip, ItemRefTooltip }) do
+    tt:HookScript("OnTooltipSetItem", function(self) addBookLine(self, select(2, self:GetItem())) end)
+  end
+end
+
 -- Events (registered at PLAYER_LOGIN, once the saved state is loaded) ---
 function ns.InitDetection()
   -- itemIDs learned by the old proximity fallback (could be wrong, e.g. Stonewrought Design learned as Magma or Lava?)
@@ -72,4 +101,5 @@ function ns.InitDetection()
   end)
   scanQuests()
   scanBags()
+  hookTooltips()
 end

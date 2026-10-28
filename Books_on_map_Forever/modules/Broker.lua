@@ -26,10 +26,13 @@ function ns.InitBroker()
     OnTooltipShow = function(tt)
       tt:AddLine("Books on map (Forever)")
       tt:AddLine(L["Collected: %d/%d"]:format(ns.CountDone(), #ns.BOOKS), 1, 1, 1)
+      local nearest = ns.NearestText()
+      if nearest then tt:AddDoubleLine(L["Nearest:"], nearest, 0.36, 0.78, 1, 1, 1, 1) end
       ns.AddGroupProgressTooltip(tt)
       tt:AddLine(L["Left-click: open book list"], 0.5, 1, 0.5)
       tt:AddLine(L["Right-click: toggle map icons"], 0.5, 1, 0.5)
     end,
   })
+  ns.brokerObject = obj -- (the minimap button, Minimap.lua)
   ns.RefreshBroker()
 end

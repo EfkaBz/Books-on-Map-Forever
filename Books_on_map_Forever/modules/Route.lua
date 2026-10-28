@@ -88,6 +88,47 @@ end
 
 function ns.GetRoute() return route end
 
+-- nearest missing book from the player: book, location, distance (yards), same continent
+function ns.NearestBook()
+  local cont, px, py = playerPos()
+  if not cont then return end
+  local here = { cont = cont, x = px, y = py }
+  local best, bestLoc, bestD, bestCont
+  for _, b in ipairs(BOOKS) do
+    if eligible(b) then
+      for _, loc in ipairs(b.locs) do
+        local c, x, y = worldPos(loc[1], loc[2] / 100, loc[3] / 100)
+        if c then
+          local d = cost(here, { cont = c, x = x, y = y })
+          if not bestD or d < bestD then best, bestLoc, bestD, bestCont = b, loc, d, c end
+        end
+      end
+    end
+  end
+  if best then return best, bestLoc, bestD, bestCont == cont end
+end
+
+-- "Nearest: name - 340 yd" for the broker / minimap tooltip
+function ns.NearestText()
+  local b, _, d, same = ns.NearestBook()
+  if not b then return end
+  return ("%s - %s"):format(b.name, same and L["%d yd"]:format(math.floor(d)) or L["other continent"])
+end
+
+-- /bom next: prints the nearest book, TomTom waypoint (or opens the map there)
+function ns.GoToNearest()
+  local b, loc, d, same = ns.NearestBook()
+  if not b then print(ns.PREFIX .. L["Every book has been collected."]) return end
+  print(ns.PREFIX .. L["nearest book: %s - %s (%.1f, %.1f), %s"]:format(b.name, loc[4], loc[2], loc[3],
+    same and L["%d yd"]:format(math.floor(d)) or L["other continent"]))
+  if TomTom then
+    TomTom:AddWaypoint(loc[1], loc[2] / 100, loc[3] / 100, { title = b.name })
+  else
+    if not WorldMapFrame:IsShown() then ToggleWorldMap() end
+    WorldMapFrame:SetMapID(loc[1])
+  end
+end
+
 -- step number of a book location in the route (for the map pins)
 function ns.RouteStep(b, loc)
   if not ns.db.routeOn then return end

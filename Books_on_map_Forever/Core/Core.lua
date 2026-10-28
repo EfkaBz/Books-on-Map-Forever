@@ -7,6 +7,10 @@ ns.ICON = "Interface\\Icons\\INV_Misc_Book_09"
 ns.ADDON_ICON = "Interface\\AddOns\\Books_on_map_Forever\\adds\\icon"
 ns.PREFIX = "|cff33ff99Books on map|r: "
 
+-- library reward goals (books): necklace, ring, bow/crest/light
+ns.GOALS = { 10, 20, 25 }
+ns.GOAL_LABELS = { [10] = "Necklace unlocked", [20] = "Ring unlocked", [25] = "Bow, crest or light unlocked" }
+
 -- books the other faction can't loot (e.g. Rumi for the Horde): removed from the list (once, at load)
 local function removeOtherFactionBooks()
   local faction = UnitFactionGroup("player")
@@ -63,6 +67,7 @@ function ns.SetDone(b, value, silent)
   if not silent then
     print(ns.PREFIX .. ("%s %s (%d/%d)"):format(b.name,
       value and L["|cff00ff00collected|r"] or L["|cffff5555shown on map again|r"], ns.CountDone(), #BOOKS))
+    if value then ns.NotifyCollected(b) end
   end
   ns.Refresh()
   ns.SendGroupState()
@@ -82,17 +87,20 @@ f:SetScript("OnEvent", function(_, event, arg1)
   if event == "ADDON_LOADED" and arg1 == ADDON then
     BooksOnMapForeverDB = BooksOnMapForeverDB or {}
     ns.db = BooksOnMapForeverDB
+    BooksOnMapForeverGlobal = BooksOnMapForeverGlobal or {} -- account-wide (welcome page)
+    ns.global = BooksOnMapForeverGlobal
     ns.db.collected = ns.db.collected or {}
     removeOtherFactionBooks()
     ns.ApplyLanguage(ns.db.lang)
     localizeBooks()
   elseif event == "PLAYER_LOGIN" then
     ns.InitMap()
-    ns.InitMinimapButton()
-    ns.InitMinimapPins()
     ns.InitBroker()
+    ns.InitMinimapButton() -- (after the broker: it's the button's data object)
+    ns.InitMinimapPins()
     ns.InitDetection()
     ns.InitRoute()
     ns.InitGroup()
+    ns.InitWelcome()
   end
 end)
