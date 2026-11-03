@@ -43,15 +43,14 @@ local function createPin()
     GameTooltip:AddLine(L["Books: %d/%d"]:format(ns.CountDone(), #BOOKS), 0.7, 0.7, 0.7)
     ns.AddGroupTooltip(self.book)
     GameTooltip:AddLine(L["Shift-click: mark as collected"], 0.5, 1, 0.5)
-    if TomTom then GameTooltip:AddLine(L["Right-click: TomTom waypoint"], 0.5, 1, 0.5) end
+    local hint = ns.WaypointHint()
+    if hint then GameTooltip:AddLine(hint, 0.5, 1, 0.5) end
     GameTooltip:Show()
   end)
   p:SetScript("OnLeave", function() GameTooltip:Hide() end)
   p:SetScript("OnClick", function(self, button)
     if button == "RightButton" then
-      if TomTom then
-        TomTom:AddWaypoint(self.loc[1], self.loc[2] / 100, self.loc[3] / 100, { title = self.book.name })
-      end
+      ns.Waypoint(self.loc, self.book.name)
     elseif IsShiftKeyDown() then
       GameTooltip:Hide()
       ns.SetDone(self.book, true)

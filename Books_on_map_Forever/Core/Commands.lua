@@ -56,7 +56,8 @@ SlashCmdList.BOOKSONMAP = function(msg)
     ns.SetDone(BOOKS[tonumber(rest)], cmd == "done")
   elseif cmd == "route" then
     if rest == "list" then ns.PrintRoute()
-    elseif rest == "tomtom" then ns.SendRouteToTomTom()
+    elseif rest == "guide" then ns.GuideRoute()
+    elseif rest == "tomtom" then ns.GuideRoute(true)
     else ns.ToggleRoute() end
   elseif cmd == "welcome" or cmd == "bvn" then
     ns.ShowWelcome()
@@ -78,6 +79,6 @@ SlashCmdList.BOOKSONMAP = function(msg)
   elseif cmd == "" then
     ns.ToggleOptions()
   else
-    print(ns.PREFIX .. L["/bom (options) | list | next | share [group|guild|say] [missing] | done N | undo N | route [list|tomtom] | toggle | minimap | welcome | bug | reset | ids"])
+    print(ns.PREFIX .. L["/bom (options) | list | next | share [group|guild|say] [missing] | done N | undo N | route [list|guide|tomtom] | toggle | minimap | welcome | bug | reset | ids"])
   end
 end

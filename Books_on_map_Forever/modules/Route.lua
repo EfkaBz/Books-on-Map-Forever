@@ -115,15 +115,13 @@ function ns.NearestText()
   return ("%s - %s"):format(b.name, same and L["%d yd"]:format(math.floor(d)) or L["other continent"])
 end
 
--- /bom next: prints the nearest book, TomTom waypoint (or opens the map there)
+-- /bom next: prints the nearest book, waypoint (Shortest Path or TomTom, else opens the map there)
 function ns.GoToNearest()
   local b, loc, d, same = ns.NearestBook()
   if not b then print(ns.PREFIX .. L["Every book has been collected."]) return end
   print(ns.PREFIX .. L["nearest book: %s - %s (%.1f, %.1f), %s"]:format(b.name, loc[4], loc[2], loc[3],
     same and L["%d yd"]:format(math.floor(d)) or L["other continent"]))
-  if TomTom then
-    TomTom:AddWaypoint(loc[1], loc[2] / 100, loc[3] / 100, { title = b.name })
-  else
+  if not ns.Waypoint(loc, b.name) then
     if not WorldMapFrame:IsShown() then ToggleWorldMap() end
     WorldMapFrame:SetMapID(loc[1])
   end
@@ -137,12 +135,18 @@ function ns.RouteStep(b, loc)
   end
 end
 
-local function sendToTomTom()
-  if not TomTom then print(ns.PREFIX .. L["TomTom is not installed."]) return end
-  for i, s in ipairs(route) do
-    TomTom:AddWaypoint(s.loc[1], s.loc[2] / 100, s.loc[3] / 100, { title = ("%d. %s"):format(i, s.book.name) })
+-- route button: "Guide" when Shortest Path takes the route, "TomTom" otherwise
+local function waypointButtonText()
+  return ns.RouteWaypointProvider() == "Shortest Path" and L["Guide"] or "TomTom"
+end
+
+-- drops the books collected since the route was built, keeping the order; true when any was dropped
+local function pruneDone()
+  local n = #route
+  for i = n, 1, -1 do
+    if ns.IsDone(route[i].book) then table.remove(route, i) end
   end
-  print(ns.PREFIX .. L["%d waypoints sent to TomTom."]:format(#route))
+  return #route ~= n
 end
 
 -- Tracker (next book, distance, arrow) -----------------------------------
@@ -229,8 +233,9 @@ local function createTracker()
   skip:SetPoint("BOTTOMLEFT", 14, 12)
   local recalc = smallButton(f, L["Recalc"], function() wipe(skipped); ns.RefreshRoute(true) end)
   recalc:SetPoint("LEFT", skip, "RIGHT", 4, 0)
-  local tt = smallButton(f, "TomTom", sendToTomTom)
+  local tt = smallButton(f, waypointButtonText(), function() ns.SendRouteWaypoints(route) end)
   tt:SetPoint("LEFT", recalc, "RIGHT", 4, 0)
+  f.waypoints = tt
   local close = S.CloseButton(f, function() ns.ToggleRoute(false) end)
   close:SetPoint("BOTTOMRIGHT", -10, 11)
 
@@ -248,9 +253,17 @@ end
 function ns.RefreshRoute(rebuild)
   if not ns.db or not ns.db.routeOn then return end
   tracker = tracker or createTracker()
-  if rebuild or not route[1] or ns.IsDone(route[1].book) then ns.BuildRoute() end
+  local changed = true
+  if rebuild or not route[1] or ns.IsDone(route[1].book) then
+    ns.BuildRoute()
+  else
+    changed = pruneDone() -- a book further along was collected first
+  end
+  -- keep Shortest Path's guidance in step with the new order
+  if changed then ns.SyncRouteWaypoints(route) end
   local s = route[1]
   tracker.icon:SetTexture(s and s.book.icon and ("Interface\\Icons\\" .. s.book.icon) or ns.ICON)
+  tracker.waypoints:SetText(waypointButtonText())
   tracker:Show()
   updateTracker()
   ns.RefreshMap()
@@ -264,6 +277,7 @@ function ns.ToggleRoute(on)
     print(ns.PREFIX .. L["route: %d books, lowest level first."]:format(#route))
   else
     wipe(route)
+    ns.CancelRouteWaypoints()
     if tracker then tracker:Hide() end
     ns.RefreshMap()
   end
@@ -276,7 +290,11 @@ function ns.PrintRoute()
   end
 end
 
-function ns.SendRouteToTomTom() sendToTomTom() end
+-- /bom route guide|tomtom: sends the route (turned on first if needed); forceTomTom = skip Shortest Path
+function ns.GuideRoute(forceTomTom)
+  if not ns.db.routeOn then ns.ToggleRoute(true) end
+  ns.SendRouteWaypoints(route, forceTomTom)
+end
 
 function ns.InitRoute()
   if ns.db.routeOn then ns.RefreshRoute(true) end
