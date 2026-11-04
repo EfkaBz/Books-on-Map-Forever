@@ -178,7 +178,8 @@ local function rowTooltip(self)
   ns.AddGroupTooltip(b)
   GameTooltip:AddLine(" ")
   GameTooltip:AddLine(L["Click: open the map there"], 0.5, 1, 0.5)
-  if TomTom then GameTooltip:AddLine(L["Right-click: TomTom waypoint"], 0.5, 1, 0.5) end
+  local hint = b.locs[1] and ns.WaypointHint()
+  if hint then GameTooltip:AddLine(hint, 0.5, 1, 0.5) end
   GameTooltip:Show()
 end
 
@@ -219,7 +220,7 @@ local function createRow(parent, b, y, width)
 
   row:SetScript("OnClick", function(self, button)
     if button == "RightButton" then
-      if TomTom and l then TomTom:AddWaypoint(l[1], l[2] / 100, l[3] / 100, { title = b.name }) end
+      ns.Waypoint(l, b.name)
     elseif l then
       if not WorldMapFrame:IsShown() then ToggleWorldMap() end
       WorldMapFrame:SetMapID(l[1])

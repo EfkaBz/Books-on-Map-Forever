@@ -11,7 +11,7 @@ local CARD_W = (WIDTH - 2 * PAD - GAP) / 2
 local FEATURES = {
   { "INV_Misc_Map_01", "Map and minimap", "Every library book on the world map and the minimap, with its exact place." },
   { "INV_Misc_Bag_08", "Automatic detection", "Books in your bags and books handed in to the library are checked off by themselves." },
-  { "Ability_Tracking", "Optimized route", "The shortest path through the books you miss, with an arrow and TomTom waypoints." },
+  { "Ability_Tracking", "Optimized route", "Your missing books in the best order, with an arrow and Shortest Path or TomTom." },
   { "Ability_Warrior_BattleShout", "Group mode", "See which books your group members still need and help them." },
   { "INV_Jewelry_Ring_03", "Rewards", "Track the necklace (10), the ring (20) and the bow, crest or light (25)." },
   { "INV_Misc_Note_01", "New in this version", "Collection alerts, item tooltips, nearest book (/bom next) and /bom share." },
