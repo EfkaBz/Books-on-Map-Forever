@@ -71,7 +71,7 @@ You can use `/bom` or `/books`.
 
 - [Shortest Path Forever](https://github.com/cjber/shortest-path-forever) guides you to your books, using the fastest way there. It is used first when installed.
 - [TomTom](https://www.curseforge.com/wow/addons/tomtom) adds waypoints.
-- [OpenMap](https://www.curseforge.com/wow/addons/openmap) gives you one seamless world map. The book icons stay visible on top of it.
+- [OpenMap](https://github.com/openmap-world/openmap) gives you one seamless world map. The book icons stay visible on top of it.
 
 Books on map works without them.
 
@@ -139,7 +139,7 @@ Vous pouvez utiliser `/bom` ou `/books`.
 
 - [Shortest Path Forever](https://github.com/cjber/shortest-path-forever) vous guide jusqu'à vos livres par le chemin le plus rapide. Il est utilisé en priorité s'il est installé.
 - [TomTom](https://www.curseforge.com/wow/addons/tomtom) ajoute les points de passage.
-- [OpenMap](https://www.curseforge.com/wow/addons/openmap) offre une carte du monde d'un seul tenant. Les icônes des livres restent visibles par-dessus.
+- [OpenMap](https://github.com/openmap-world/openmap) offre une carte du monde d'un seul tenant. Les icônes des livres restent visibles par-dessus.
 
 Books on map fonctionne sans eux.
 
