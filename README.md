@@ -24,7 +24,8 @@ Books on map shows every library book on your world map and minimap, checks them
 - **Optimized route:** a tracker with an arrow and the distance to your next missing book, with optional Shortest Path guidance or TomTom waypoints.
 - **Group mode:** see which books your group members still need, if they use the addon too.
 - **Rewards:** follow your progress toward the necklace (10 books), the ring (20 books), and the bow, crest or light (25 books).
-- **Collection alerts:** a notification for each book found, and a bigger one at each reward goal.
+- **Collection alerts:** a notification for each book found, and a bigger one with a completion sound at each reward goal.
+- **Nearby alert:** a notification with a ping when a missing book is within 50 yards. You can turn it off in the settings.
 - **Filters:** hide collected books, or show only the sets for your level.
 - **Two languages:** English and French, automatic or chosen in the options.
 - **Data broker support:** works with Titan Panel, ChocolateBar, ElvUI, Bazooka and similar addons.
@@ -62,6 +63,7 @@ You can use `/bom` or `/books`.
 | `/bom toggle` | Show or hide the map icons |
 | `/bom minimap` | Show or hide the minimap button |
 | `/bom welcome` | Open the welcome page again |
+| `/bom test` | Preview the reward goal and nearby alerts |
 | `/bom bug` | Get the link to report a bug on Discord |
 | `/bom reset` | Reset your list |
 
@@ -89,7 +91,8 @@ Books on map affiche tous les livres de la bibliothèque sur la carte du monde e
 - **Route optimisée :** un suivi avec une flèche et la distance jusqu'au prochain livre manquant, avec un guidage Shortest Path ou des points TomTom en option.
 - **Mode groupe :** voyez les livres qui manquent aux membres de votre groupe, s'ils utilisent aussi l'addon.
 - **Récompenses :** suivez votre progression vers le collier (10 livres), l'anneau (20 livres) et l'arc, l'écu ou la lueur (25 livres).
-- **Alertes de collection :** une notification par livre trouvé, et une plus grande à chaque palier de récompense.
+- **Alertes de collection :** une notification par livre trouvé, et une plus grande avec un son de complétion à chaque palier de récompense.
+- **Alerte de proximité :** une notification avec un ping quand un livre manquant est à moins de 50 mètres. Vous pouvez la désactiver dans les réglages.
 - **Filtres :** masquez les livres ramassés ou affichez seulement les séries de votre niveau.
 - **Deux langues :** anglais et français, en automatique ou au choix dans les options.
 - **Compatible Data Broker :** fonctionne avec Titan Panel, ChocolateBar, ElvUI, Bazooka et les addons similaires.
@@ -127,6 +130,7 @@ Vous pouvez utiliser `/bom` ou `/books`.
 | `/bom toggle` | Afficher ou masquer les icônes de la carte |
 | `/bom minimap` | Afficher ou masquer le bouton de la minimap |
 | `/bom welcome` (ou `/bom bvn`) | Rouvrir la page d'accueil |
+| `/bom test` | Prévisualiser les alertes de palier et de proximité |
 | `/bom bug` | Obtenir le lien pour signaler un bug sur Discord |
 | `/bom reset` | Réinitialiser votre liste |
 
