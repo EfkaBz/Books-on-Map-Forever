@@ -136,6 +136,7 @@ function ns.RefreshOptions()
   frame.showMinimap:SetChecked(not ns.db.hideMinimapPins)
   frame.showButton:SetChecked(not ns.db.hideMinimap)
   frame.toasts:SetChecked(not ns.db.noToasts)
+  frame.nearby:SetChecked(not ns.db.noNearby)
   frame.minimapSize:SetValue(ns.db.minimapPinSize or ns.DEFAULT_MINIMAP_PIN_SIZE)
   frame.lang.Refresh()
 
@@ -343,7 +344,7 @@ local function create()
       function(open) ns.db.folded[key] = not open or nil end)
     return body
   end
-  local settingsBody = section("settings", settings, 124)
+  local settingsBody = section("settings", settings, 148)
 
   local function settingCheck(label, y, onClick)
     local c = S.Check(settingsBody, label)
@@ -378,6 +379,9 @@ local function create()
   end)
   f.toasts = settingCheck(L["Notify when a book is collected"], -102, function(self)
     ns.db.noToasts = not self:GetChecked() or nil
+  end)
+  f.nearby = settingCheck(L["Alert when a book is nearby"], -126, function(self)
+    ns.db.noNearby = not self:GetChecked() or nil
   end)
 
   -- Filters

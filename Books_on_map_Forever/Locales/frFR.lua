@@ -119,6 +119,10 @@ L["Necklace unlocked"] = "Collier débloqué"
 L["Ring unlocked"] = "Anneau débloqué"
 L["Bow, crest or light unlocked"] = "Arc, écu ou lueur débloqué"
 L["%d books: hand them in at the library!"] = "%d livres : rendez-les à la bibliothèque !"
+-- nearby detector
+L["Alert when a book is nearby"] = "Alerte quand un livre est tout près"
+L["Book nearby!"] = "Livre tout près !"
+L["book nearby: %s - %s (%.1f, %.1f), %s"] = "livre tout près : %s - %s (%.1f, %.1f), %s"
 -- item tooltips, nearest book, share
 L["Library book"] = "Livre de la bibliothèque"
 L["Nearest:"] = "Plus proche :"

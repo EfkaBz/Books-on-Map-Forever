@@ -75,6 +75,12 @@ function ns.ShowToast(icon, title, text, sound)
   end
 end
 
+-- reward goal reached: the sound plays right away, its toast follows the "book found" one
+function ns.NotifyGoal(goal)
+  PlaySoundFile(ns.COMPLETION_SOUND, "Master")
+  ns.ShowToast(ns.ADDON_ICON, L[ns.GOAL_LABELS[goal]], L["%d books: hand them in at the library!"]:format(goal))
+end
+
 -- called by ns.SetDone for a book found (not for silent changes)
 function ns.NotifyCollected(b)
   if ns.db.noToasts then return end
@@ -82,10 +88,6 @@ function ns.NotifyCollected(b)
   ns.ShowToast(b.icon and ("Interface\\Icons\\" .. b.icon) or ns.ICON, L["Book found!"],
     ("%s  |cff7f90ab(%d/%d)|r"):format(b.name, done, #BOOKS))
   for _, goal in ipairs(ns.GOALS) do
-    if done == goal then
-      ns.ShowToast(ns.ADDON_ICON, L[ns.GOAL_LABELS[goal]],
-        L["%d books: hand them in at the library!"]:format(goal),
-        SOUNDKIT and (SOUNDKIT.UI_QUEST_ROLLING_FORWARD_01 or SOUNDKIT.IG_QUEST_LIST_COMPLETE))
-    end
+    if done == goal then ns.NotifyGoal(goal) end
   end
 end

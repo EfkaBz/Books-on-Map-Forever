@@ -63,6 +63,8 @@ SlashCmdList.BOOKSONMAP = function(msg)
     ns.ShowWelcome()
   elseif cmd == "bug" then
     ns.ReportBug()
+  elseif cmd == "test" then
+    ns.TestAlerts()
   elseif cmd == "next" then
     ns.GoToNearest()
   elseif cmd == "share" then

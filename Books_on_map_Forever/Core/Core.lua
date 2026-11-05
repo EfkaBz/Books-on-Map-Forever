@@ -6,6 +6,7 @@ local BOOKS = ns.BOOKS
 ns.ICON = "Interface\\Icons\\INV_Misc_Book_09"
 ns.ADDON_ICON = "Interface\\AddOns\\Books_on_map_Forever\\adds\\icon"
 ns.PREFIX = "|cff33ff99Books on map|r: "
+ns.COMPLETION_SOUND = "Interface\\AddOns\\Books_on_map_Forever\\adds\\Sounds\\Completion.ogg"
 
 -- library reward goals (books): necklace, ring, bow/crest/light
 ns.GOALS = { 10, 20, 25 }
@@ -98,6 +99,7 @@ f:SetScript("OnEvent", function(_, event, arg1)
     ns.InitBroker()
     ns.InitMinimapButton() -- (after the broker: it's the button's data object)
     ns.InitMinimapPins()
+    ns.InitNearby()
     ns.InitDetection()
     ns.InitRoute()
     ns.InitGroup()

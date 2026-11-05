@@ -24,6 +24,7 @@ local function locWorld(loc)
   end
   return w
 end
+ns.LocWorld = locWorld
 
 local function createPin()
   local p = CreateFrame("Button", nil, Minimap)
