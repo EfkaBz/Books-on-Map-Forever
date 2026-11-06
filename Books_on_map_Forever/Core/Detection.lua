@@ -1,4 +1,4 @@
--- Books on map (Forever): automatic detection (bags and library turn-ins)
+-- Books on map (Forever): automatic detection (bags, bank and library turn-ins)
 local _, ns = ...
 local L = ns.L
 local BOOKS = ns.BOOKS
@@ -45,8 +45,19 @@ local function checkItem(link)
   end
 end
 
+local getItemCount = C_Item and C_Item.GetItemCount or GetItemCount
+
+-- does the character hold this book, bags or bank? (the count includes the bank even away from it)
+function ns.OwnsBook(b)
+  return b.item and getItemCount and (getItemCount(b.item, true) or 0) > 0
+end
+
+-- bags first (a book just looted gets its toast), then books already stored in the bank (silent)
 local function scanBags()
   ns.ForEachBagItem(checkItem)
+  for _, b in ipairs(BOOKS) do
+    if not ns.IsDone(b) and ns.OwnsBook(b) then ns.SetDone(b, true, true) end
+  end
 end
 
 -- books already handed in to the library (needs b.quest)
@@ -92,6 +103,8 @@ function ns.InitDetection()
   ns.db.itemIDs = nil
   local f = CreateFrame("Frame")
   f:RegisterEvent("BAG_UPDATE_DELAYED")
+  f:RegisterEvent("BANKFRAME_OPENED")
+  f:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
   f:RegisterEvent("QUEST_TURNED_IN")
   f:SetScript("OnEvent", function(_, event, questID)
     if event == "QUEST_TURNED_IN" then

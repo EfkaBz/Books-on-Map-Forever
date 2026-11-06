@@ -40,7 +40,8 @@ local function check()
       if d and d <= RADIUS then
         if not alerted[b] then
           alerted[b] = true
-          alert(b, loc, d)
+          -- last check: a book held in the bags or the bank isn't missing
+          if ns.OwnsBook(b) then ns.SetDone(b, true, true) else alert(b, loc, d) end
         end
       elseif alerted[b] and (not d or d > REARM) then
         alerted[b] = nil
