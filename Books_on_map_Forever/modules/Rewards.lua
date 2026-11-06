@@ -7,20 +7,20 @@ local S = ns.Skin
 local PANEL_W = 260
 local TIER_H, ITEM_H = 22, 36
 
--- items: { itemID, English name, French name } (the cached item name is used in English)
+-- items: { itemID, English name } (translated by Locales\*.lua: the cached item name is in the client's language)
 local TIERS = {
   { goal = 10, label = "10 books: necklace", items = {
-    { 277203, "Scholarly Pendant", "Pendentif d'érudition" },
-    { 277204, "Erudite's Amulet", "Amulette de l'érudit" },
+    { 277203, "Scholarly Pendant" },
+    { 277204, "Erudite's Amulet" },
   } },
   { goal = 20, label = "20 books: ring", items = {
-    { 281634, "Field Researcher's Loop", "Jonc de recherche de terrain" },
-    { 281635, "Philanthropist's Ring", "Anneau de philanthrope" },
+    { 281634, "Field Researcher's Loop" },
+    { 281635, "Philanthropist's Ring" },
   } },
   { goal = 25, label = "25 books: bow, crest or light", items = {
-    { 277254, "Truthseeker's Bow", "Arc de cherche-vérité" },
-    { 277258, "Crest of Elucidation", "Écu d'élucidation" },
-    { 277260, "Researcher's Night Light", "Lueur nocturne de chercheur" },
+    { 277254, "Truthseeker's Bow" },
+    { 277258, "Crest of Elucidation" },
+    { 277260, "Researcher's Night Light" },
   } },
 }
 
@@ -32,18 +32,17 @@ local panel
 
 -- name, quality color, icon and slot from the item cache
 local function fillItem(row)
-  local name, _, quality, _, _, _, subType, _, equipLoc, icon, _, classID, subclassID = getInfo(row.id)
+  local _, _, quality, _, _, _, subType, _, equipLoc, icon, _, classID, subclassID = getInfo(row.id)
   row.icon:SetTexture(icon or getIcon(row.id) or "Interface\\Icons\\INV_Misc_QuestionMark")
-  row.name:SetText(ns.IS_FRENCH and row.frName or name or row.fallback)
+  row.name:SetText(L[row.fallback])
   if quality then
     local r, g, b = getQualityColor(quality)
     row.name:SetTextColor(r, g, b)
   end
-  -- slot and type come in the client's language: French ones from the locale
-  local slot = equipLoc and _G[equipLoc]
-  if ns.IS_FRENCH and equipLoc then
-    slot = ns.FR[equipLoc] or slot
-    subType = ns.FR[("ITEM_SUBCLASS_%s_%s"):format(classID, subclassID)] or subType
+  -- slot and type come in the client's language: the chosen language's ones from the locale
+  local slot = equipLoc and (ns.Localized(equipLoc) or _G[equipLoc])
+  if equipLoc then
+    subType = ns.Localized(("ITEM_SUBCLASS_%s_%s"):format(classID, subclassID)) or subType
   end
   if slot and slot ~= "" then
     row.slot:SetText(subclassID and subclassID ~= 0 and subType and ("%s - %s"):format(slot, subType) or slot)
@@ -81,6 +80,7 @@ local function createTier(parent, tier, y)
   h.label = S.Text(h, 12, "accent", "extrabold")
   h.label:SetPoint("LEFT", 10, 0)
   h.label:SetText(L[tier.label])
+  S.FitText(h.label, 165, 12)
 
   h.count = S.Text(h, 11, "muted")
   h.count:SetPoint("RIGHT", -8, 0)
@@ -92,7 +92,7 @@ local function createItem(parent, item, y)
   row:SetPoint("TOPLEFT", 16, -y)
   row:SetPoint("TOPRIGHT", -16, -y)
   row:SetHeight(ITEM_H)
-  row.id, row.fallback, row.frName = item[1], item[2], item[3]
+  row.id, row.fallback = item[1], item[2]
 
   local icon = S.Icon(row, 30)
   icon:SetPoint("LEFT", 2, 0)
@@ -106,6 +106,7 @@ local function createItem(parent, item, y)
   row.slot = S.Text(row, 11, "muted")
   row.slot:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 9, 1)
   row.slot:SetPoint("RIGHT", -2, 0)
+  row.slot:SetWordWrap(false)
 
   row:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")

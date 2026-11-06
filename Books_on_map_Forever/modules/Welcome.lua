@@ -3,9 +3,9 @@ local ADDON, ns = ...
 local L = ns.L
 local S = ns.Skin
 
-local WIDTH, HEIGHT = 520, 580
+local WIDTH, HEIGHT = 520, 616
 local PAD = 18
-local CARD_H, GAP = 74, 12 -- room for a title and 3 lines of description
+local CARD_H, GAP = 86, 12 -- room for a title and 4 lines of description
 local CARD_W = (WIDTH - 2 * PAD - GAP) / 2
 
 local FEATURES = {
@@ -14,7 +14,7 @@ local FEATURES = {
   { "Ability_Tracking", "Optimized route", "Your missing books in the best order, with an arrow and Shortest Path or TomTom." },
   { "Ability_Warrior_BattleShout", "Group mode", "See which books your group members still need and help them." },
   { "INV_Jewelry_Ring_03", "Rewards", "Track the necklace (10), the ring (20) and the bow, crest or light (25)." },
-  { "INV_Misc_Note_01", "New in this version", "Collection alerts, item tooltips, nearest book (/bom next) and /bom share." },
+  { "INV_Misc_Note_01", "New in this version", "Now in 10 languages: pick yours at the top of the window." },
 }
 
 local COMMANDS = {

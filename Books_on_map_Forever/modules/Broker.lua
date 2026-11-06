@@ -13,7 +13,7 @@ function ns.InitBroker()
   if not ldb then return end
   obj = ldb:NewDataObject("Books on map (Forever)", {
     type = "data source",
-    label = "Books",
+    label = L["Books"],
     icon = ns.ADDON_ICON,
     OnClick = function(_, button)
       if button == "RightButton" then

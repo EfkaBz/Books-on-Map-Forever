@@ -113,11 +113,13 @@ end
 -- Fonts --------------------------------------------------------------------
 -- the game font, with a soft shadow
 local fonts = {}
-local function font(size)
-  local key = tostring(size)
+local function font(size, lang)
+  lang = lang or ns.LANG
+  local key = lang .. tostring(size)
   if not fonts[key] then
     local f = CreateFont("BooksOnMapForeverFont" .. key)
-    f:SetFont(STANDARD_TEXT_FONT, size, "")
+    f:SetFont(ns.FontPath(lang), size, "")
+    if not f:GetFont() then f:SetFont(STANDARD_TEXT_FONT, size, "") end
     f:SetShadowColor(0, 0, 0, 0.9)
     f:SetShadowOffset(1, -1)
     fonts[key] = f
@@ -132,6 +134,23 @@ function S.Text(parent, size, col, weight, layer)
   fs:SetTextColor(color(C[col or "text"]))
   fs:SetJustifyH("LEFT")
   return fs
+end
+
+-- makes a one-line text fit a width (translations are longer or shorter than the English
+-- layout): smaller font down to 9, then cut with "..."
+function S.FitText(fs, maxWidth, size, lang)
+  local r, g, b, a = fs:GetTextColor()
+  fs:SetWidth(0)
+  for s = size, 9, -1 do
+    fs:SetFontObject(font(s, lang))
+    if fs:GetStringWidth() <= maxWidth then
+      fs:SetTextColor(r, g, b, a)
+      return
+    end
+  end
+  fs:SetTextColor(r, g, b, a)
+  fs:SetWordWrap(false)
+  fs:SetWidth(maxWidth)
 end
 
 -- Boxes --------------------------------------------------------------------
@@ -489,7 +508,9 @@ function S.Button(parent, text, width, height, onClick, primary)
   b.text = S.Text(b, 12, primary and "gold" or "text")
   b.text:SetPoint("CENTER")
   b.text:SetJustifyH("CENTER")
+  b.fitWidth = (width or 120) - 8
   b.text:SetText(text)
+  S.FitText(b.text, b.fitWidth, 12)
   local function tint(to)
     local from = b.borderNow or border
     S.Tween(b.borders, { dur = 0.18, from = 0, to = 1, set = function(v)
@@ -503,64 +524,152 @@ function S.Button(parent, text, width, height, onClick, primary)
   b:SetScript("OnMouseDown", function(self) self.text:SetPoint("CENTER", 0, -1) end)
   b:SetScript("OnMouseUp", function(self) self.text:SetPoint("CENTER") end)
   b:SetScript("OnClick", onClick)
-  function b:SetText(t) self.text:SetText(t) end
+  function b:SetText(t)
+    self.text:SetText(t)
+    S.FitText(self.text, self.fitWidth, 12)
+  end
   return b
 end
 
--- row of toggle pills, one selected: options = { {value, text, tooltip}, ... }
-function S.Segmented(parent, options, width, getValue, onSelect)
-  local holder = CreateFrame("Frame", nil, parent)
-  holder:SetSize(width * #options, 22)
-  S.Box(holder, { C.btn1, C.btn2 }, C.trim)
-  -- sliding gold pill behind the selected option
-  local pill = CreateFrame("Frame", nil, holder)
-  pill:SetSize(width - 2, 20)
-  S.Box(pill, { C.pill1, C.pill2 }, C.ring)
-  holder.buttons = {}
-  local current
-  local function refresh(animate)
-    local v = getValue()
-    for i, b in ipairs(holder.buttons) do
-      local on = b.value == v
-      b.text:SetTextColor(color(on and C.gold or C.dim))
-      if on then
-        local x = (i - 1) * width + 1
-        if animate and current then
-          local from = current
-          S.Tween(pill, { dur = 0.3, from = from, to = x, ease = "outBack", set = function(px)
-            pill:SetPoint("LEFT", px, 0)
-          end })
-        else
-          pill:SetPoint("LEFT", x, 0)
-        end
-        current = x
-      end
+-- Dropdown ------------------------------------------------------------------
+-- button with a chevron that flips, and a rounded menu that slides and fades in; a click
+-- anywhere else closes it. options = { {value, button text, menu text, language of its font}, ... }
+local MENU_ROW, MENU_PAD = 22, 5
+function S.Dropdown(parent, options, width, menuWidth, getValue, onSelect, tooltip)
+  local b = S.Button(parent, "", width, 22)
+  b.fitWidth = width - 22 -- room for the chevron
+  b.text:ClearAllPoints()
+  b.text:SetPoint("CENTER", -6, 0)
+  b:SetScript("OnMouseDown", nil)
+  b:SetScript("OnMouseUp", nil)
+
+  -- chevron drawn with two rotated lines (the game font has no arrow glyph)
+  local function chevronBar(x)
+    local t = b:CreateTexture(nil, "OVERLAY")
+    t:SetTexture(WHITE)
+    t:SetSize(6, 1.6)
+    t:SetPoint("CENTER", b, "RIGHT", x, 0)
+    t:SetVertexColor(color(C.gold))
+    return t
+  end
+  local barL, barR = chevronBar(-13), chevronBar(-8.6)
+  local angle = 40
+  local function setChevron(a)
+    angle = a
+    barL:SetRotation(math.rad(-a))
+    barR:SetRotation(math.rad(a))
+  end
+  local function flipChevron(to)
+    S.Tween(barL, { dur = 0.2, from = angle, to = to, set = setChevron })
+  end
+  setChevron(angle)
+
+  local menu, catcher, rows
+
+  local function close(instant)
+    if not menu or not menu:IsShown() then return end
+    catcher:Hide()
+    flipChevron(40)
+    if instant then
+      S.StopTween(menu)
+      menu:Hide()
+      menu:SetAlpha(1)
+    else
+      S.Close(menu)
     end
   end
-  for i, o in ipairs(options) do
-    local b = CreateFrame("Button", nil, holder)
-    b:SetSize(width, 22)
-    b:SetPoint("LEFT", (i - 1) * width, 0)
-    b:SetFrameLevel(pill:GetFrameLevel() + 1)
-    b.value = o[1]
-    b.text = S.Text(b, 11)
-    b.text:SetPoint("CENTER")
-    b.text:SetText(o[2])
-    b:SetScript("OnClick", function() onSelect(o[1]); refresh(true) end)
-    b:SetScript("OnEnter", function(self)
-      self.text:SetTextColor(color(C.gold))
-      if o[3] then
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:AddLine(o[3], 1, 1, 1)
-        GameTooltip:Show()
-      end
-    end)
-    b:SetScript("OnLeave", function() GameTooltip:Hide(); refresh() end)
-    holder.buttons[i] = b
+
+  local function refreshLabel()
+    local v = getValue()
+    for _, o in ipairs(options) do
+      if o[1] == v then b:SetText(o[2]) end
+    end
   end
-  holder.Refresh = function() refresh(true) end
-  refresh()
-  return holder
+
+  local function refreshRows()
+    local v = getValue()
+    for _, row in ipairs(rows) do
+      local on = row.value == v
+      row.dot:SetShown(on)
+      row.text:SetTextColor(color(on and C.gold or C.text))
+    end
+  end
+
+  local function build()
+    catcher = CreateFrame("Button", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:SetFrameStrata("TOOLTIP")
+    catcher:SetFrameLevel(10)
+    catcher:RegisterForClicks("AnyUp")
+    catcher:SetScript("OnClick", function() close() end)
+    catcher:Hide()
+
+    menu = CreateFrame("Frame", nil, UIParent)
+    menu:SetFrameStrata("TOOLTIP")
+    menu:SetFrameLevel(20)
+    menu:SetSize(menuWidth, #options * MENU_ROW + 2 * MENU_PAD)
+    menu:SetPoint("TOPRIGHT", b, "BOTTOMRIGHT", 0, -4)
+    menu:SetClampedToScreen(true)
+    menu:EnableMouse(true)
+    S.Shadow(menu, 10, 0.6)
+    S.Rounded(menu, 6)
+    menu:Hide()
+
+    rows = {}
+    for i, o in ipairs(options) do
+      local row = CreateFrame("Button", nil, menu)
+      row:SetPoint("TOPLEFT", MENU_PAD, -MENU_PAD - (i - 1) * MENU_ROW)
+      row:SetPoint("TOPRIGHT", -MENU_PAD, -MENU_PAD - (i - 1) * MENU_ROW)
+      row:SetHeight(MENU_ROW)
+      row.value = o[1]
+      S.RowHighlight(row)
+      row.dot = row:CreateTexture(nil, "OVERLAY")
+      row.dot:SetTexture(MEDIA .. "Dot")
+      row.dot:SetSize(7, 7)
+      row.dot:SetPoint("LEFT", 7, 0)
+      row.dot:SetVertexColor(color(C.gold))
+      -- each language is written in its own alphabet, whatever the active language is
+      row.text = S.Text(row, 12)
+      row.text:SetFontObject(font(12, o[4]))
+      row.text:SetPoint("LEFT", 20, 0)
+      row.text:SetText(o[3])
+      S.FitText(row.text, menuWidth - 2 * MENU_PAD - 26, 12, o[4])
+      row:SetScript("OnEnter", function(self) self.text:SetTextColor(1, 1, 1) end)
+      row:SetScript("OnLeave", refreshRows)
+      row:SetScript("OnClick", function()
+        close()
+        onSelect(o[1])
+        refreshLabel()
+      end)
+      rows[i] = row
+    end
+  end
+
+  b:SetScript("OnClick", function()
+    if not menu then build() end
+    if menu:IsShown() and catcher:IsShown() then
+      close()
+      return
+    end
+    GameTooltip:Hide()
+    refreshRows()
+    catcher:Show()
+    menu:Show()
+    flipChevron(-40)
+    S.AnimateOpen(menu, 0, 8)
+  end)
+  if tooltip then
+    b:HookScript("OnEnter", function(self)
+      GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+      GameTooltip:AddLine(tooltip, 1, 1, 1)
+      GameTooltip:Show()
+    end)
+    b:HookScript("OnLeave", function() GameTooltip:Hide() end)
+  end
+  b:HookScript("OnHide", function() close(true) end)
+  b.Refresh = refreshLabel
+  refreshLabel()
+  return b
 end
 
 -- Checkbox -----------------------------------------------------------------
@@ -624,6 +733,10 @@ function S.Check(parent, label, size)
     c:SetHitRectInsets(0, -(c.text:GetStringWidth() + 10), -3, -3)
     c:HookScript("OnEnter", function(self) self.text:SetTextColor(1, 1, 1) end)
     c:HookScript("OnLeave", function(self) self.text:SetTextColor(color(C.text)) end)
+    function c:FitLabel(maxWidth)
+      S.FitText(self.text, maxWidth, 13)
+      self:SetHitRectInsets(0, -(math.min(self.text:GetStringWidth(), maxWidth) + 10), -3, -3)
+    end
   end
   return c
 end
@@ -670,6 +783,7 @@ function S.Slider(parent, width, min, max, label, onChange)
   s.label = S.Text(s, 12, "text", "medium")
   s.label:SetPoint("BOTTOMLEFT", s, "TOPLEFT", 0, 5)
   s.label:SetText((label:gsub("%s*:?%s*%%d", "")))
+  S.FitText(s.label, width - 30, 12)
   s.value = S.Text(s, 12, "gold")
   s.value:SetPoint("BOTTOMRIGHT", s, "TOPRIGHT", 0, 5)
 

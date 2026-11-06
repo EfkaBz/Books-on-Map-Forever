@@ -23,10 +23,9 @@ end
 
 -- display names/places in the chosen language (once, at load)
 local function localizeBooks()
-  if not ns.IS_FRENCH then return end
   for _, b in ipairs(BOOKS) do
-    b.name = b.frName or b.name
-    for _, loc in ipairs(b.locs) do loc[4] = loc[5] or loc[4] end
+    b.name = L[b.name]
+    for _, loc in ipairs(b.locs) do loc[4] = L[loc[4]] end
   end
 end
 

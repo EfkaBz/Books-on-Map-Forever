@@ -6,6 +6,7 @@ local S = ns.Skin
 
 local WIDTH, HEIGHT = 470, 760
 local ROW_H, HEADER_H = 36, 26
+local BESIDE_SLIDER = 225 -- width of a settings label on the same line as a size slider
 local GOAL_NECKLACE, GOAL_RING, GOAL_25 = unpack(ns.GOALS)
 
 local SETS = {
@@ -24,7 +25,7 @@ local function lowerPopup(self) self:SetFrameStrata("DIALOG") end
 
 -- Language (reloads the UI: names are localized at load); also used by the welcome page
 StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD = {
-  text = L["The interface will be reloaded to apply the language."],
+  text = "", -- (set when shown: the saved language isn't known yet when this file loads)
   button1 = OKAY, button2 = CANCEL,
   OnAccept = function(_, lang) ns.db.lang = lang; ReloadUI() end,
   OnShow = raisePopup, OnHide = lowerPopup,
@@ -34,7 +35,7 @@ StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD = {
 -- Report a bug: the game can't open links, so the Discord invite is shown selected, ready to copy
 ns.DISCORD = "https://discord.com/invite/2WXxyC84NJ"
 StaticPopupDialogs.BOOKSONMAPFOREVER_BUG = {
-  text = L["Report a bug on Discord: press Ctrl+C to copy the link."],
+  text = "",
   button1 = CLOSE,
   hasEditBox = true, editBoxWidth = 260,
   OnShow = function(self)
@@ -56,11 +57,14 @@ StaticPopupDialogs.BOOKSONMAPFOREVER_BUG = {
   timeout = 0, whileDead = true, hideOnEscape = true,
 }
 
-function ns.ReportBug() StaticPopup_Show("BOOKSONMAPFOREVER_BUG") end
+function ns.ReportBug()
+  StaticPopupDialogs.BOOKSONMAPFOREVER_BUG.text = L["Report a bug on Discord: press Ctrl+C to copy the link."]
+  StaticPopup_Show("BOOKSONMAPFOREVER_BUG")
+end
 
 -- small title-bar button that opens the bug report popup
 function ns.BugButton(parent)
-  local b = S.Button(parent, "Bug", 34, 20, ns.ReportBug) -- narrow: the version text sits left of it
+  local b = S.Button(parent, L["Bug"], 34, 20, ns.ReportBug) -- narrow: the version text sits left of it
   b:HookScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
     GameTooltip:AddLine(L["Report a bug"], 1, 1, 1)
@@ -71,18 +75,17 @@ function ns.BugButton(parent)
   return b
 end
 
--- Auto / EN / FR pills; picking another language asks to reload
+-- language menu (Auto + every language); picking another language asks to reload
 function ns.LanguageSelector(parent)
-  return S.Segmented(parent, {
-    { "auto", L["Auto"], L["Automatic (game language)"] },
-    { "enUS", "EN", "English" },
-    { "frFR", "FR", "Français" },
-  }, 38, function() return ns.db.lang or "auto" end, function(value)
+  local options = { { "auto", L["Auto"], L["Automatic (game language)"] } }
+  for _, l in ipairs(ns.LANGS) do options[#options + 1] = { l[1], l[2], l[3], l[1] } end
+  return S.Dropdown(parent, options, 52, 180, function() return ns.db.lang or "auto" end, function(value)
     if (ns.db.lang or "auto") ~= value then
+      StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD.text = L["The interface will be reloaded to apply the language."]
       local d = StaticPopup_Show("BOOKSONMAPFOREVER_RELOAD")
       if d then d.data = value end
     end
-  end)
+  end, L["Language"])
 end
 
 local function iconPath(b)
@@ -320,13 +323,16 @@ local function create()
   f.necklace = S.Text(f, 11)
   f.necklace:SetPoint("TOPLEFT", f.bar, "BOTTOMLEFT", 0, -6)
   f.necklace:SetText(L["10 books: necklace"])
+  S.FitText(f.necklace, 125, 11)
   f.ring = S.Text(f, 11)
   f.ring:SetPoint("TOP", f.bar, "BOTTOM", 0, -6)
   f.ring:SetText(L["20 books: ring"])
+  S.FitText(f.ring, 125, 11)
   f.goal25 = S.Text(f, 11)
   f.goal25:SetPoint("TOPRIGHT", f.bar, "BOTTOMRIGHT", 0, -6)
   f.goal25:SetJustifyH("RIGHT")
   f.goal25:SetText(L["25 books: bow, crest or light"])
+  S.FitText(f.goal25, 150, 11)
 
   -- Settings: show icons + icon size (world map, then minimap)
   local settings = S.Section(f, L["Settings"])
@@ -346,8 +352,9 @@ local function create()
   end
   local settingsBody = section("settings", settings, 148)
 
-  local function settingCheck(label, y, onClick)
+  local function settingCheck(label, y, onClick, maxWidth)
     local c = S.Check(settingsBody, label)
+    c:FitLabel(maxWidth or 408)
     c:SetPoint("TOPLEFT", 0, y)
     c:SetScript("OnClick", onClick)
     return c
@@ -367,16 +374,16 @@ local function create()
 
   f.showAll = settingCheck(L["Show on the map"], -14, function(self)
     ns.db.hidden = not self:GetChecked(); ns.Refresh()
-  end)
+  end, BESIDE_SLIDER)
   f.size = sizeSlider(-26, 10, 40, "Map icon size: %d", "pinSize", ns.DEFAULT_PIN_SIZE, ns.RefreshMap)
 
   f.showMinimap = settingCheck(L["Show books on the minimap"], -52, function(self)
     ns.db.hideMinimapPins = not self:GetChecked() or nil; ns.RefreshMinimapPins()
-  end)
+  end, BESIDE_SLIDER)
   f.minimapSize = sizeSlider(-64, 8, 30, "Minimap icon size: %d", "minimapPinSize", ns.DEFAULT_MINIMAP_PIN_SIZE, ns.RefreshMinimapPins)
   f.showButton = settingCheck(L["Show the minimap button"], -78, function(self)
     ns.db.hideMinimap = not self:GetChecked() or nil; ns.UpdateMinimapButton()
-  end)
+  end, BESIDE_SLIDER)
   f.toasts = settingCheck(L["Notify when a book is collected"], -102, function(self)
     ns.db.noToasts = not self:GetChecked() or nil
   end)
@@ -390,15 +397,16 @@ local function create()
   filters:SetPoint("TOPRIGHT", settingsBody, "BOTTOMRIGHT", 0, -8)
   local filtersBody = section("filters", filters, 58)
 
-  local function filterCheck(label, key, x, y)
+  local function filterCheck(label, key, x, y, maxWidth)
     local c = S.Check(filtersBody, label)
+    c:FitLabel(maxWidth)
     c:SetPoint("TOPLEFT", x, y)
     c:SetScript("OnClick", function(self) ns.db[key] = self:GetChecked() or nil; ns.RefreshOptions() end)
     return c
   end
-  f.hideDone = filterCheck(L["Hide collected books"], "hideCollected", 0, -10)
-  f.myLevel = filterCheck(L["Only sets for my level"], "myLevelOnly", WIDTH / 2 - PAD, -10)
-  f.groupBooks = filterCheck(L["Also show the books my group is missing"], "hideGroupBooks", 0, -34)
+  f.hideDone = filterCheck(L["Hide collected books"], "hideCollected", 0, -10, 182)
+  f.myLevel = filterCheck(L["Only sets for my level"], "myLevelOnly", WIDTH / 2 - PAD, -10, 182)
+  f.groupBooks = filterCheck(L["Also show the books my group is missing"], "hideGroupBooks", 0, -34, 408)
   f.groupBooks:SetScript("OnClick", function(self)
     ns.db.hideGroupBooks = not self:GetChecked() or nil; ns.Refresh()
   end)

@@ -7,9 +7,12 @@ local function norm(s)
   -- French client: curly apostrophe and (narrow) no-break spaces before : ? !
   return ((s or ""):gsub("’", "'"):gsub("\194\160", ""):gsub("\226\128\175", ""):lower():gsub("[%s%p]", ""))
 end
--- English and French names, computed before the names are localized
+-- names in every language, computed before the names are localized
 for _, b in ipairs(BOOKS) do
-  b.norms = { norm(b.name), b.frName and norm(b.frName) }
+  b.norms = { norm(b.name) }
+  for _, strings in pairs(ns.LOCALES) do
+    if strings[b.name] then b.norms[#b.norms + 1] = norm(strings[b.name]) end
+  end
 end
 
 local numSlots = C_Container and C_Container.GetContainerNumSlots or GetContainerNumSlots

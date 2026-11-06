@@ -27,7 +27,7 @@ Books on map shows every library book on your world map and minimap, checks them
 - **Collection alerts:** a notification for each book found, and a bigger one with a completion sound at each reward goal.
 - **Nearby alert:** a notification with a ping when a missing book is within 50 yards. You can turn it off in the settings.
 - **Filters:** hide collected books, or show only the sets for your level.
-- **Two languages:** English and French, automatic or chosen in the options.
+- **Ten languages:** English, French, German, Spanish, Italian, Portuguese, Russian, Korean, Simplified Chinese and Traditional Chinese. The addon follows your game language, or you can pick another one in the menu at the top of the window.
 - **Data broker support:** works with Titan Panel, ChocolateBar, ElvUI, Bazooka and similar addons.
 
 ### Installation
@@ -75,6 +75,10 @@ You can use `/bom` or `/books`.
 
 Books on map works without them.
 
+### Language feedback
+
+Spotted a wrong or awkward translation? Leave a comment on CurseForge or come tell us on [Discord](https://discord.com/invite/2WXxyC84NJ).
+
 ### Copyright
 
 Copyright (c) 2026 Daeler. All rights reserved. The libraries in the `Libs` folder belong to their respective authors.
@@ -95,7 +99,7 @@ Books on map affiche tous les livres de la bibliothèque sur la carte du monde e
 - **Alertes de collection :** une notification par livre trouvé, et une plus grande avec un son de complétion à chaque palier de récompense.
 - **Alerte de proximité :** une notification avec un ping quand un livre manquant est à moins de 50 mètres. Vous pouvez la désactiver dans les réglages.
 - **Filtres :** masquez les livres ramassés ou affichez seulement les séries de votre niveau.
-- **Deux langues :** anglais et français, en automatique ou au choix dans les options.
+- **Dix langues :** anglais, français, allemand, espagnol, italien, portugais, russe, coréen, chinois simplifié et chinois traditionnel. L'addon suit la langue de votre jeu, ou vous pouvez en choisir une autre dans le menu en haut de la fenêtre.
 - **Compatible Data Broker :** fonctionne avec Titan Panel, ChocolateBar, ElvUI, Bazooka et les addons similaires.
 
 ### Installation
@@ -142,6 +146,10 @@ Vous pouvez utiliser `/bom` ou `/books`.
 - [OpenMap](https://github.com/openmap-world/openmap) offre une carte du monde d'un seul tenant. Les icônes des livres restent visibles par-dessus.
 
 Books on map fonctionne sans eux.
+
+### Retours sur les langues
+
+Une traduction vous semble fausse ou maladroite ? Laissez un commentaire sur CurseForge ou passez sur le [Discord](https://discord.com/invite/2WXxyC84NJ).
 
 ### Droits d'auteur
 

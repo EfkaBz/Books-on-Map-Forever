@@ -224,6 +224,7 @@ function ns.CreateGroupTab(f)
   legend:SetPoint("TOP", 0, -44)
   legend:SetJustifyH("CENTER")
   legend:SetText(L["Greyed out = missing  -  Click: map"])
+  S.FitText(legend, PANEL_W - 24, 11)
 
   local scroll, content = S.Scroll(panel)
   scroll:SetPoint("TOPLEFT", 14, -64)
