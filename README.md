@@ -58,6 +58,7 @@ You can use `/bom` or `/books`.
 | `/bom route list` | Print the route in chat |
 | `/bom route guide` | Send the route to Shortest Path, or to TomTom if Shortest Path is not available |
 | `/bom route tomtom` | Send the route to TomTom |
+| `/bom recalc` | Recalculate the route, starting on the book closest to you (usable in macros) |
 | `/bom share [group\|guild\|say] [missing]` | Share your progress in chat, and optionally your missing books |
 | `/bom done N` / `/bom undo N` | Mark book number N as collected or not collected |
 | `/bom toggle` | Show or hide the map icons |
@@ -130,6 +131,7 @@ Vous pouvez utiliser `/bom` ou `/books`.
 | `/bom route list` | Afficher la route dans le chat |
 | `/bom route guide` | Envoyer la route à Shortest Path, ou à TomTom si Shortest Path n'est pas disponible |
 | `/bom route tomtom` | Envoyer la route à TomTom |
+| `/bom recalc` | Recalculer la route en commençant par le livre le plus proche (utilisable dans une macro) |
 | `/bom share [group\|guild\|say] [missing]` | Partager votre progression dans le chat, et éventuellement vos livres manquants |
 | `/bom done N` / `/bom undo N` | Marquer le livre numéro N comme ramassé ou non ramassé |
 | `/bom toggle` | Afficher ou masquer les icônes de la carte |
