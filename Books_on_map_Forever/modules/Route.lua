@@ -22,10 +22,10 @@ local function eligible(b)
 end
 
 -- optimized path (nearest neighbor + 2-opt) through the books of one set, from start
-local function planSet(set, start)
+local function planSet(set, start, exclude)
   local cands = {}
   for _, b in ipairs(BOOKS) do
-    if b.set == set and eligible(b) then
+    if b.set == set and eligible(b) and b ~= exclude then
       -- every location of the book; a book is done once any of its locations is visited
       for _, loc in ipairs(b.locs) do
         local c, x, y = worldPos(loc[1], loc[2] / 100, loc[3] / 100)
@@ -72,13 +72,24 @@ local function planSet(set, start)
 end
 
 -- Builds the route from the player's position: every book, lowest set first,
--- each set optimized and starting where the previous one ends
-function ns.BuildRoute()
+-- each set optimized and starting where the previous one ends.
+-- nearestFirst = the nearest book, whatever its set, comes before all of that
+function ns.BuildRoute(nearestFirst)
   wipe(route)
   local cont, px, py = playerPos()
   local cur = { cont = cont or -1, x = px or 0, y = py or 0 }
+  local first
+  if nearestFirst then
+    local b, loc = ns.NearestBook()
+    if b then
+      local c, x, y = worldPos(loc[1], loc[2] / 100, loc[3] / 100)
+      first = b
+      cur = { book = b, loc = loc, cont = c, x = x, y = y }
+      route[1] = cur
+    end
+  end
   for _, set in ipairs({ 1, 35, 45, 60 }) do
-    for _, step in ipairs(planSet(set, cur)) do
+    for _, step in ipairs(planSet(set, cur, first)) do
       route[#route + 1] = step
       cur = step
     end
@@ -231,7 +242,7 @@ local function createTracker()
     ns.RefreshRoute(true)
   end)
   skip:SetPoint("BOTTOMLEFT", 14, 12)
-  local recalc = smallButton(f, L["Recalc"], function() wipe(skipped); ns.RefreshRoute(true) end)
+  local recalc = smallButton(f, L["Recalc"], function() ns.RecalcRoute() end)
   recalc:SetPoint("LEFT", skip, "RIGHT", 4, 0)
   local tt = smallButton(f, waypointButtonText(), function() ns.SendRouteWaypoints(route) end)
   tt:SetPoint("LEFT", recalc, "RIGHT", 4, 0)
@@ -250,12 +261,12 @@ local function createTracker()
 end
 
 -- rebuild = recompute the order from the current position
-function ns.RefreshRoute(rebuild)
+function ns.RefreshRoute(rebuild, nearestFirst)
   if not ns.db or not ns.db.routeOn then return end
   tracker = tracker or createTracker()
   local changed = true
   if rebuild or not route[1] or ns.IsDone(route[1].book) then
-    ns.BuildRoute()
+    ns.BuildRoute(nearestFirst)
   else
     changed = pruneDone() -- a book further along was collected first
   end
@@ -269,11 +280,11 @@ function ns.RefreshRoute(rebuild)
   ns.RefreshMap()
 end
 
-function ns.ToggleRoute(on)
+function ns.ToggleRoute(on, nearestFirst)
   if on == nil then on = not ns.db.routeOn end
   ns.db.routeOn = on or nil
   if on then
-    ns.RefreshRoute(true)
+    ns.RefreshRoute(true, nearestFirst)
     print(ns.PREFIX .. L["route: %d books, lowest level first."]:format(#route))
   else
     wipe(route)
@@ -281,6 +292,13 @@ function ns.ToggleRoute(on)
     if tracker then tracker:Hide() end
     ns.RefreshMap()
   end
+end
+
+-- Recalc button and /bom recalc: clears the skips and rebuilds from the current position,
+-- starting on the nearest book (turned on first if needed)
+function ns.RecalcRoute()
+  wipe(skipped)
+  if ns.db.routeOn then ns.RefreshRoute(true, true) else ns.ToggleRoute(true, true) end
 end
 
 function ns.PrintRoute()
