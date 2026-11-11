@@ -13,8 +13,13 @@ local VERSION = getMeta(ADDON, "Version") or "?"
 local members = {} -- short name -> bits string
 local others = {}  -- short name -> addon version, for players whose addon has another book list
 local versions = {} -- short name -> addon version, for the members who share their books
-local index = {}   -- book -> position in BOOKS
-for i, b in ipairs(BOOKS) do index[b] = i end
+-- book -> position in BOOKS: built in InitGroup (PLAYER_LOGIN), once the other faction's books are
+-- removed, so the positions match the bits encode() sends (built at load, they were shifted)
+local index = {}
+local function buildIndex()
+  wipe(index)
+  for i, b in ipairs(BOOKS) do index[b] = i end
+end
 
 -- full character name without the realm: on WoW Forever names are compound ("Daeler Backbï"),
 -- so only a "-Realm" suffix is dropped (several alts share the same first name)
@@ -81,7 +86,8 @@ local function sortedNames()
 end
 
 local function has(name, b)
-  return members[name]:sub(index[b], index[b]) == "1"
+  local i = index[b]
+  return i ~= nil and members[name]:sub(i, i) == "1"
 end
 
 -- for the group panel
@@ -148,6 +154,7 @@ end
 
 -- Events -----------------------------------------------------------------
 function ns.InitGroup()
+  buildIndex()
   if not (C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix) then return end
   C_ChatInfo.RegisterAddonMessagePrefix(PREFIX)
   local f = CreateFrame("Frame")
