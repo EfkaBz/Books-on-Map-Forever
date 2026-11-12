@@ -59,7 +59,7 @@ ns.BOOKS = {
   { key = "kalimdor", item = 228134, quest = 84397, set = 60, icon = "inv_misc_book_03", name = "Northern Kalimdor - A Comprehensive Guide", locs = { { FELWOOD, 65.2, 3.3, "Timbermaw Hold tunnel, Felwood" } } },
   { key = "undeadpotatoes", item = 228132, quest = 84395, set = 60, icon = "inv_misc_book_09", name = "Undead Potatoes", locs = { { WPL, 38.3, 54.6, "Felstone Field, Western Plaguelands" } } },
   { key = "knightlady", item = 228138, quest = 84400, set = 60, icon = "inv_misc_book_04", name = "The Knight and the Lady", locs = { { EPL, 47.3, 42.3, "Eastern Plaguelands" } } },
-  { key = "scourge", item = 228140, quest = 84401, set = 60, icon = "inv_misc_book_01", name = "Scourge: Undead Menace or Misunderstood?", locs = { { EPL, 31.3, 21.0, "Eastern Plaguelands" } } },
+  { key = "scourge", item = 228140, quest = 84401, set = 60, icon = "inv_misc_book_01", name = "Scourge: Undead Menace or Misunderstood?", locs = { { EPL, 26.5, 15.1, "Eastern Plaguelands" } } },
   { key = "studylight", item = 228135, quest = 84398, set = 60, icon = "inv_misc_book_13", name = "A Study of the Light", locs = { { EPL, 71.8, 48.2, "Light's Hope Chapel, Eastern Plaguelands" } } },
   { key = "kaboom", item = 228136, quest = 84399, set = 60, icon = "inv_misc_book_11", name = "Ka-Boom!", locs = { { WINTERSPRING, 60.7, 37.7, "Everlook, Winterspring" } } },
   { key = "necromancy", item = 228141, quest = 84402, set = 60, icon = "inv_misc_book_06", name = "Necromancy 101", locs = { { WPL, 69.4, 72.8, "Caer Darrow keep, Western Plaguelands" } } },
