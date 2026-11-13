@@ -13,7 +13,7 @@ local FEATURES = {
   { "INV_Misc_Bag_08", "Automatic detection", "Books in your bags and books handed in to the library are checked off by themselves." },
   { "Ability_Tracking", "Optimized route", "Your missing books in the best order, with an arrow and Shortest Path or TomTom." },
   { "Ability_Warrior_BattleShout", "Group mode", "See which books your group members still need and help them." },
-  { "INV_Jewelry_Ring_03", "Rewards", "Track the necklace (10), the ring (20) and the bow, crest or light (25)." },
+  { "INV_Jewelry_Ring_03", "Rewards", "Track the necklace (10), the ring (20), the bow, crest or light (25) and the necklace or shield (38)." },
   { "INV_Misc_Note_01", "New in this version", "Now in 10 languages: pick yours at the top of the window." },
 }
 

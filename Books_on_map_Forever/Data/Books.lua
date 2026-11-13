@@ -43,7 +43,6 @@ ns.BOOKS = {
   { key = "weblies", item = 215816, quest = 79949, set = 35, icon = "inv_misc_note_05", name = "A Web of Lies: Debunking Myths and Legends", locs = { { ARATHI, 73.6, 65.2, "Witherbark Village, Arathi Highlands" } } },
   { key = "demons", item = 215817, quest = 79950, set = 35, icon = "inv_misc_book_01", name = "Demons and You", locs = { { DESOLACE, 55.1, 26.2, "Thunder Axe Fortress, Desolace" } } },
   { key = "mummies", item = 215820, quest = 79951, set = 35, icon = "inv_scroll_01", name = "Mummies: A Guide to the Unsavory Undead", locs = { { BADLANDS, 56.7, 39.9, "Badlands" } } },
-  { key = "luddite", item = 215824, quest = 79953, set = 35, icon = "inv_misc_book_10", name = "A Luddite's Guide to Caring for Your Demonic Pet", locs = { { SWAMP, 61.4, 22.4, "Fallow Sanctuary, Swamp of Sorrows" } } },
 
   -- Level 45 set
   { key = "sanguine", item = 220345, quest = 81947, set = 45, icon = "inv_misc_book_06", name = "Sanguine Sorcery", locs = { { SWAMP, 70.0, 51.0, "Top of the Sunken Temple, Swamp of Sorrows" } } },

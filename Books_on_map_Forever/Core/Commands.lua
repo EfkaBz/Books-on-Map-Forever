@@ -4,7 +4,7 @@ local L = ns.L
 local BOOKS = ns.BOOKS
 
 local SHARE_CHANNELS = { group = true, party = "PARTY", raid = "RAID", guild = "GUILD", say = "SAY" }
-local NEXT_REWARD = { [10] = "necklace", [20] = "ring", [25] = "bow, crest or light" }
+local NEXT_REWARD = { [10] = "necklace", [20] = "ring", [25] = "bow, crest or light", [38] = "necklace or shield" }
 
 -- /bom share [group|guild|say] [missing]: progress (and the missing books) in chat, plain text
 local function share(rest)

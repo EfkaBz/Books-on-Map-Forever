@@ -7,7 +7,7 @@ local S = ns.Skin
 local WIDTH, HEIGHT = 470, 760
 local ROW_H, HEADER_H = 36, 26
 local BESIDE_SLIDER = 225 -- width of a settings label on the same line as a size slider
-local GOAL_NECKLACE, GOAL_RING, GOAL_25 = unpack(ns.GOALS)
+local GOAL_NECKLACE, GOAL_RING, GOAL_25, GOAL_38 = unpack(ns.GOALS)
 
 local SETS = {
   { id = 1, label = "Starting set" },
@@ -336,6 +336,7 @@ local function create()
   goalMark(GOAL_NECKLACE, L["10 books: necklace"])
   goalMark(GOAL_RING, L["20 books: ring"])
   goalMark(GOAL_25, L["25 books: bow, crest or light"])
+  goalMark(GOAL_38, L["38 books: necklace or shield"])
   f.endMark = goalMark(nil, nil)
   f.endMark.notch:Hide()
   f.placeGoals = function()
@@ -348,6 +349,10 @@ local function create()
       m.dot:SetPoint("TOP", f.bar, "BOTTOMLEFT", math.min(x, w - 4), -3)
       m.text:SetText(goal)
     end
+    -- the last reward on the full collection: one mark at the end, not two on top of each other
+    local last = f.goals[#f.goals - 1].goal
+    f.endMark.dot:SetShown(last < #BOOKS)
+    f.endMark.text:SetShown(last < #BOOKS)
   end
   f.placeGoals()
 

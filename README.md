@@ -23,7 +23,7 @@ Books on map shows every library book on your world map and minimap, checks them
 - **Automatic detection:** books in your bags and books handed in to the library are checked off automatically.
 - **Optimized route:** a tracker with an arrow and the distance to your next missing book, with optional Shortest Path guidance or TomTom waypoints.
 - **Group mode:** see which books your group members still need, if they use the addon too.
-- **Rewards:** follow your progress toward the necklace (10 books), the ring (20 books), and the bow, crest or light (25 books).
+- **Rewards:** follow your progress toward the necklace (10 books), the ring (20 books), the bow, crest or light (25 books), and the necklace or shield (38 books).
 - **Collection alerts:** a notification for each book found, and a bigger one with a completion sound at each reward goal.
 - **Nearby alert:** a notification with a ping when a missing book is within 50 yards. You can turn it off in the settings.
 - **Filters:** hide collected books, or show only the sets for your level.

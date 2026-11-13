@@ -8,9 +8,10 @@ ns.ADDON_ICON = "Interface\\AddOns\\Books_on_map_Forever\\adds\\icon"
 ns.PREFIX = "|cff33ff99Books on map|r: "
 ns.COMPLETION_SOUND = "Interface\\AddOns\\Books_on_map_Forever\\adds\\Sounds\\Completion.ogg"
 
--- library reward goals (books): necklace, ring, bow/crest/light
-ns.GOALS = { 10, 20, 25 }
-ns.GOAL_LABELS = { [10] = "Necklace unlocked", [20] = "Ring unlocked", [25] = "Bow, crest or light unlocked" }
+-- library reward goals (books): necklace, ring, bow/crest/light, necklace/shield
+ns.GOALS = { 10, 20, 25, 38 }
+ns.GOAL_LABELS = { [10] = "Necklace unlocked", [20] = "Ring unlocked", [25] = "Bow, crest or light unlocked",
+  [38] = "Necklace or shield unlocked" }
 
 -- books the other faction can't loot (e.g. Rumi for the Horde): removed from the list (once, at load)
 local function removeOtherFactionBooks()
