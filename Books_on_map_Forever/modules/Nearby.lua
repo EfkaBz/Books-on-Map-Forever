@@ -25,9 +25,8 @@ end
 local function alert(b, loc, dist)
   local distText = L["%d yd"]:format(math.floor(dist))
   print(ns.PREFIX .. L["book nearby: %s - %s (%.1f, %.1f), %s"]:format(b.name, loc[4], loc[2], loc[3], distText))
-  ns.ShowToast(b.icon and ("Interface\\Icons\\" .. b.icon) or ns.ICON,
-    ("%s  |cff7f90ab%s|r"):format(L["Book nearby!"], distText), b.name,
-    SOUNDKIT and SOUNDKIT.MAP_PING)
+  ns.ShowToast("nearby", ns.BookIcon(b), ("%s  |cff7f90ab%s|r"):format(L["Book nearby!"], distText), b.name,
+    ("%s  |cff5cc8ff(%.1f, %.1f)|r"):format(loc[4], loc[2], loc[3]), SOUNDKIT and SOUNDKIT.MAP_PING)
 end
 
 local function check()
@@ -50,11 +49,12 @@ local function check()
   end
 end
 
--- /bom test: plays the reward goal alert and the nearby alert
+-- /bom test: plays the three alerts (nearby, book found, reward goal)
 function ns.TestAlerts()
-  ns.NotifyGoal(ns.GOALS[1])
   local b = BOOKS[1]
   alert(b, b.locs[1], 32)
+  ns.ShowToast("found", ns.BookIcon(b), L["Book found!"], b.name)
+  ns.NotifyGoal(ns.GOALS[1])
 end
 
 function ns.InitNearby()

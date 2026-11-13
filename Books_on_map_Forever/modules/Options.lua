@@ -128,10 +128,14 @@ function ns.RefreshOptions()
   if not frame or not frame:IsShown() then return end
   local done = ns.CountDone()
 
-  frame.bar:SetValue(math.min(done, GOAL_25))
+  frame.bar:SetMinMaxValues(0, #BOOKS)
+  frame.bar:SetValue(done)
   frame.barText:SetText(L["%d / %d books"]:format(done, #BOOKS))
-  for _, t in ipairs({ { frame.necklace, GOAL_NECKLACE }, { frame.ring, GOAL_RING }, { frame.goal25, GOAL_25 } }) do
-    t[1]:SetTextColor(S.Color(done >= t[2] and S.C.good or S.C.muted))
+  frame.placeGoals()
+  for _, m in ipairs(frame.goals) do
+    local col = done >= (m.goal or #BOOKS) and S.C.good or S.C.muted
+    m.text:SetTextColor(S.Color(col))
+    m.dot:SetVertexColor(S.Color(col))
   end
 
   frame.showAll:SetChecked(not ns.db.hidden)
@@ -302,7 +306,7 @@ local function create()
   local bug = ns.BugButton(f.titleBar)
   bug:SetPoint("RIGHT", f.lang, "LEFT", -6, 0)
 
-  -- Progress (toward the 25-book reward)
+  -- Progress (every book, with the reward goals marked on the bar)
   local progress = S.Section(f, L["Progress"])
   progress:SetPoint("TOPLEFT", PAD, -48)
   progress:SetPoint("TOPRIGHT", -PAD, -48)
@@ -311,28 +315,60 @@ local function create()
   f.bar = S.ProgressBar(f, 12)
   f.bar:SetPoint("TOPLEFT", progress, "BOTTOMLEFT", 0, -10)
   f.bar:SetPoint("TOPRIGHT", progress, "BOTTOMRIGHT", 0, -10)
-  f.bar:SetMinMaxValues(0, GOAL_25)
-  -- markers at the necklace and ring goals
-  for _, goal in ipairs({ GOAL_NECKLACE, GOAL_RING }) do
-    local mark = f.bar:CreateTexture(nil, "OVERLAY")
-    mark:SetSize(2, 12)
-    mark:SetColorTexture(S.Color(S.C.bg))
-    mark:SetPoint("LEFT", f.bar, "LEFT", (WIDTH - 2 * PAD) * goal / GOAL_25 - 1, 0)
+  f.bar:SetMinMaxValues(0, #BOOKS)
+  -- reward goals on the bar (10, 20, 25) and the full collection at the end: a notch on the
+  -- bar, its number under it (green once reached); placed by placeGoals, the total is only
+  -- known once the other faction's books are removed
+  f.goals = {}
+  local function goalMark(goal, label)
+    local m = { goal = goal, label = label }
+    m.notch = f.bar:CreateTexture(nil, "OVERLAY", nil, 2)
+    m.notch:SetSize(2, 12)
+    m.notch:SetColorTexture(S.Color(S.C.bg))
+    m.dot = f:CreateTexture(nil, "OVERLAY")
+    m.dot:SetTexture(S.MEDIA .. "Dot")
+    m.dot:SetSize(7, 7)
+    m.text = S.Text(f, 11, "muted")
+    m.text:SetPoint("TOP", m.dot, "BOTTOM", 0, -1)
+    f.goals[#f.goals + 1] = m
+    return m
   end
+  goalMark(GOAL_NECKLACE, L["10 books: necklace"])
+  goalMark(GOAL_RING, L["20 books: ring"])
+  goalMark(GOAL_25, L["25 books: bow, crest or light"])
+  f.endMark = goalMark(nil, nil)
+  f.endMark.notch:Hide()
+  f.placeGoals = function()
+    local w = WIDTH - 2 * PAD
+    for _, m in ipairs(f.goals) do
+      local goal = m.goal or #BOOKS
+      local x = w * goal / math.max(1, #BOOKS)
+      m.notch:SetPoint("LEFT", f.bar, "LEFT", x - 1, 0)
+      m.notch:SetShown(m.goal ~= nil and goal < #BOOKS)
+      m.dot:SetPoint("TOP", f.bar, "BOTTOMLEFT", math.min(x, w - 4), -3)
+      m.text:SetText(goal)
+    end
+  end
+  f.placeGoals()
 
-  f.necklace = S.Text(f, 11)
-  f.necklace:SetPoint("TOPLEFT", f.bar, "BOTTOMLEFT", 0, -6)
-  f.necklace:SetText(L["10 books: necklace"])
-  S.FitText(f.necklace, 125, 11)
-  f.ring = S.Text(f, 11)
-  f.ring:SetPoint("TOP", f.bar, "BOTTOM", 0, -6)
-  f.ring:SetText(L["20 books: ring"])
-  S.FitText(f.ring, 125, 11)
-  f.goal25 = S.Text(f, 11)
-  f.goal25:SetPoint("TOPRIGHT", f.bar, "BOTTOMRIGHT", 0, -6)
-  f.goal25:SetJustifyH("RIGHT")
-  f.goal25:SetText(L["25 books: bow, crest or light"])
-  S.FitText(f.goal25, 150, 11)
+  -- hovering the bar lists the rewards
+  local hover = CreateFrame("Frame", nil, f)
+  hover:SetPoint("TOPLEFT", f.bar, -2, 4)
+  hover:SetPoint("BOTTOMRIGHT", f.bar, 2, -24)
+  hover:SetScript("OnEnter", function(self)
+    local done = ns.CountDone()
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:AddLine(L["Rewards"], S.Color(S.C.accent))
+    for _, m in ipairs(f.goals) do
+      if m.label then
+        local c = done >= m.goal and S.C.good or S.C.muted
+        GameTooltip:AddLine(m.label, c[1], c[2], c[3])
+      end
+    end
+    GameTooltip:AddLine(L["%d / %d books"]:format(done, #BOOKS), 1, 1, 1)
+    GameTooltip:Show()
+  end)
+  hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
   -- Settings: show icons + icon size (world map, then minimap)
   local settings = S.Section(f, L["Settings"])

@@ -19,21 +19,21 @@ ns.BOOKS = {
   { key = "theocritus", item = 203755, quest = 79092, set = 1, icon = "inv_misc_book_12", name = "Archmage Theocritus' Research Journal", locs = { { ELWYNN, 65.4, 70.1, "Tower of Azora, Elwynn Forest" } } },
   { key = "antonidas", item = 203754, quest = 79091, set = 1, icon = "inv_misc_book_12", name = "Archmage Antonidas: The Unabridged Autobiography", locs = { { IRONFORGE, 75.7, 10.5, "Ironforge" } } },
   { key = "envoutements", item = 209845, quest = 78142, set = 1, icon = "inv_misc_book_01", name = "Bewitchments and Glamours", locs = { { WESTFALL, 45.4, 70.4, "Moonbrook, Westfall" } } },
-  { key = "rumi", item = 208860, quest = 79093, faction = "Alliance", set = 1, icon = "inv_misc_book_12", name = "Rumi of Gnomeregan: The Collected Works", locs = {
+  { key = "rumi", item = 208860, quest = 79093, set = 1, icon = "inv_misc_book_12", name = "Rumi of Gnomeregan: The Collected Works", locs = {
       { WESTFALL, 52.7, 53.8, "Sentinel Hill, Westfall" },
       { LOCHMODAN, 35.6, 48.9, "Thelsamar, Loch Modan (same book)" } } },
   { key = "anatomie", item = 209849, quest = 78147, set = 1, icon = "inv_misc_book_06", name = "Crimes Against Anatomy", locs = { { DUSKWOOD, 16.6, 28.5, "The Darkened Bank, Duskwood" } } },
   { key = "runes", item = 209850, quest = 78148, set = 1, icon = "inv_scroll_02", name = "Runes of the Sorcerer-Kings", locs = { { LOCHMODAN, 77.4, 14.0, "Mo'grosh Stronghold, Loch Modan" } } },
   { key = "goaz", item = 209848, quest = 78146, set = 1, icon = "inv_scroll_15", name = "Goaz Scrolls", locs = { { WETLANDS, 33.6, 47.9, "Whelgar's Excavation Site, Wetlands" } } },
   { key = "dalaran", item = 209844, quest = 78127, set = 1, icon = "inv_relics_libramoftruth", name = "The Dalaran Digest, Vol. 23", locs = { { SILVERPINE, 63.5, 63.1, "Ambermill, Silverpine Forest" } } },
-  { key = "ataeric", item = 210177, quest = 79096, faction = "Horde", set = 1, icon = "inv_misc_book_12", name = "Ataeric: On Arcane Curiosities", locs = { { SILVERPINE, 43.4, 41.2, "The Sepulcher, inside the tomb near Sebastian Meloche, Silverpine Forest" } } },
-  { key = "abecedaire", item = 208185, quest = 79095, faction = "Horde", set = 1, icon = "inv_misc_book_05", name = "The Apothecary's Metaphysical Primer", locs = { { TIRISFAL, 59.4, 52.3, "Brill, Tirisfal Glades" } } },
+  { key = "ataeric", item = 210177, quest = 79096, set = 1, icon = "inv_misc_book_12", name = "Ataeric: On Arcane Curiosities", locs = { { SILVERPINE, 43.4, 41.2, "The Sepulcher, inside the tomb near Sebastian Meloche, Silverpine Forest" } } },
+  { key = "abecedaire", item = 208185, quest = 79095, set = 1, icon = "inv_misc_book_05", name = "The Apothecary's Metaphysical Primer", locs = { { TIRISFAL, 59.4, 52.3, "Brill, Tirisfal Glades" } } },
   { key = "narthalas", item = 209843, quest = 78124, set = 1, icon = "inv_scroll_12", name = "Nar'thalas Almanac, Vol. 74", locs = { { DARKSHORE, 59.6, 22.2, "Ruins of Mathystra, Darkshore" } } },
   { key = "arcaniques", item = 209847, quest = 78145, set = 1, icon = "inv_misc_toy_05", name = "Arcanic Systems Manual", locs = { { BARRENS, 56.3, 8.8, "The Sludge Fen, The Barrens" } } },
   { key = "baxtan", item = 208800, quest = 79097, set = 1, icon = "inv_misc_book_12", name = "Baxtan: On Destructive Magics", locs = { { BARRENS, 62.7, 36.3, "Ratchet, The Barrens" } } },
   { key = "reveurs", item = 209846, quest = 78143, set = 1, icon = "inv_scroll_09", name = "Secrets of the Dreamers", locs = { { BARRENS, 46.0, 36.5, "Cave entrance, then Cavern of Mists (52.8, 54.7 on cave map)" } } },
   { key = "fureur", item = 209851, quest = 78149, set = 1, icon = "inv_holiday_tow_spicebandage", name = "Fury of the Land", locs = { { STONETALON, 74.4, 85.7, "Grimtotem Post, Stonetalon Mountains" } } },
-  { key = "tazo", item = 207972, quest = 79094, faction = "Horde", set = 1, icon = "inv_scroll_02", name = "The Lessons of Ta'zo", locs = { { ORGRIMMAR, 38.7, 78.4, "Ta'zo Mural, Orgrimmar" } } },
+  { key = "tazo", item = 207972, quest = 79094, set = 1, icon = "inv_scroll_02", name = "The Lessons of Ta'zo", locs = { { ORGRIMMAR, 38.7, 78.4, "Ta'zo Mural, Orgrimmar" } } },
 
   -- Level 35 set
   { key = "basilics", item = 213165, quest = 79535, set = 35, icon = "inv_inscription_scroll", name = "Basilisks: Should Petrification be Feared?", locs = { { STV, 41.4, 50.9, "Crystalvein Mine, Stranglethorn Vale" } } },
