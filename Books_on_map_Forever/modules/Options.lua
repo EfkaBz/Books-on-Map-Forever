@@ -500,3 +500,10 @@ function ns.ToggleOptions()
   frame = frame or create()
   if frame:IsShown() then S.Close(frame) else frame:Show() end
 end
+
+-- opens the addon on its rewards tab
+function ns.OpenRewards()
+  ns.OpenSideTab("rewards")
+  frame = frame or create()
+  if not frame:IsShown() then frame:Show() end
+end

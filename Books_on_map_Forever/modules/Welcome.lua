@@ -143,8 +143,28 @@ function ns.ShowWelcome()
   if not frame:IsShown() then frame:Show() end
 end
 
--- first time on this account: after the loading screen
+-- 2.3.0: the new reward tier at 38 books, announced once per account; a click opens the rewards tab
+local NEW_TIER_ICON = 281637 -- Antique Bulwark
+local function announceNewTier()
+  ns.global.tier38Seen = true
+  if ns.db.noToasts then -- alerts turned off: a line in chat instead
+    print(ns.PREFIX .. L["New reward tier!"] .. " " .. L["38 books: 3 new rewards"])
+    return
+  end
+  local getIcon = C_Item and C_Item.GetItemIconByID or GetItemIcon
+  local icon = getIcon(NEW_TIER_ICON) or "Interface\\Icons\\INV_Holiday_Christmas_Present_01"
+  ns.ShowToast("news", icon, L["New reward tier!"], L["38 books: 3 new rewards"],
+    L["A necklace or a shield - click to see them"], SOUNDKIT and SOUNDKIT.IG_QUEST_LIST_OPEN, ns.OpenRewards)
+end
+ns.AnnounceNewTier = announceNewTier -- (also played by /bom test)
+
+-- first time on this account: after the loading screen (new players see the new tier there and
+-- in the rewards tab, players who already had the addon get the announcement)
 function ns.InitWelcome()
-  if ns.global.welcomeSeen then return end
+  if ns.global.welcomeSeen then
+    if not ns.global.tier38Seen then C_Timer.After(5, announceNewTier) end
+    return
+  end
+  ns.global.tier38Seen = true
   C_Timer.After(3, ns.ShowWelcome)
 end

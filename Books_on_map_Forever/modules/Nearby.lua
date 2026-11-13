@@ -55,6 +55,7 @@ function ns.TestAlerts()
   alert(b, b.locs[1], 32)
   ns.ShowToast("found", ns.BookIcon(b), L["Book found!"], b.name)
   ns.NotifyGoal(ns.GOALS[1])
+  ns.AnnounceNewTier()
 end
 
 function ns.InitNearby()

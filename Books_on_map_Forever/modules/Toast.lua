@@ -10,11 +10,12 @@ local MEDIA = S.MEDIA
 
 local W, H = 340, 84
 local ICON = 46
-local SHOW_TIME = { nearby = 5, found = 4.5, goal = 6 }
+local SHOW_TIME = { nearby = 5, found = 4.5, goal = 6, news = 10 }
 local KINDS = {
   nearby = S.C.gold,  -- the addon's blue
   found  = S.C.good,  -- green
   goal   = S.C.gold1, -- warm gold
+  news   = S.C.gold1, -- addon news (new reward tier): warm gold, a line of text instead of the bar
 }
 
 local queue = {}
@@ -104,7 +105,7 @@ local function create()
     self:SetBorderColor(self.col[1], self.col[2], self.col[3], 0.55)
   end)
   f:SetScript("OnClick", function(self, button)
-    if button == "LeftButton" then ns.ToggleOptions() end
+    if button == "LeftButton" then (self.onClick or ns.ToggleOptions)() end
     self.left = 0 -- either way the card goes away
   end)
 
@@ -138,6 +139,7 @@ local function play(t)
   local f = toast
   local col = KINDS[t.kind]
   f.col = col
+  f.onClick = t.onClick
   f.icon:SetTexture(t.icon)
   f.kicker:SetText(t.kicker)
   f.kicker:SetTextColor(S.Color(col))
@@ -152,7 +154,7 @@ local function play(t)
   for _, r in ipairs({ f.shadow:GetRegions() }) do r:SetVertexColor(col[1] * 0.4, col[2] * 0.4, col[3] * 0.4, 0.6) end
   f.iconBox:SetBorderColor(S.Color(col))
 
-  local withBar = t.kind ~= "nearby"
+  local withBar = t.kind ~= "nearby" and t.kind ~= "news"
   f.sub:SetShown(not withBar)
   f.bar:SetShown(withBar)
   f.count:SetShown(withBar)
@@ -173,7 +175,7 @@ local function play(t)
   -- icon pop + halo burst
   S.Tween(f.iconBox, { dur = 0.45, from = 0.55, to = 1, ease = "outBack",
     set = function(v) f.iconBox:SetSize(ICON * v, ICON * v) end })
-  local burst = t.kind == "goal" and 170 or 130
+  local burst = (t.kind == "goal" or t.kind == "news") and 170 or 130
   S.Tween(f.halo, { dur = 0.6, from = burst, to = 96, ease = "outCubic",
     set = function(v) f.halo:SetSize(v, v) end })
   -- the bar fills the last step once the card is in place
@@ -187,9 +189,11 @@ showNext = function()
   if t then play(t) else toast.busy = nil end
 end
 
--- kind: "nearby" | "found" | "goal"; text: the line under the title (nearby only)
-function ns.ShowToast(kind, icon, kicker, title, text, sound)
-  queue[#queue + 1] = { kind = kind, icon = icon, kicker = kicker, title = title, text = text, sound = sound }
+-- kind: "nearby" | "found" | "goal" | "news"; text: the line under the title (nearby and news only);
+-- onClick: what a left-click does (default: open the addon)
+function ns.ShowToast(kind, icon, kicker, title, text, sound, onClick)
+  queue[#queue + 1] = { kind = kind, icon = icon, kicker = kicker, title = title, text = text, sound = sound,
+    onClick = onClick }
   toast = toast or create()
   if not toast.busy then
     toast.busy = true

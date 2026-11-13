@@ -83,6 +83,12 @@ function ns.CreateSidePanel(f, title, width)
   return p
 end
 
+-- opens a side tab by its id (e.g. "rewards")
+function ns.OpenSideTab(id)
+  ns.db.sideTab = id
+  if window then layout() end
+end
+
 function ns.AddSideTab(f, id, icon, tooltipTitle, tooltipText, panel)
   window = f
   -- before the group tab, the rewards panel was a simple on/off
