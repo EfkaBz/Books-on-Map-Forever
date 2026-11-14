@@ -13,6 +13,10 @@
   <a href="#english">English</a> · <a href="#français">Français</a>
 </p>
 
+<p align="center">
+  <img src="screenshots/animated.gif" alt="Books on Map Forever" width="900">
+</p>
+
 ## English
 
 Books on map shows every library book on your world map and minimap, checks them off as you collect them, and tracks your progress toward the library rewards.
@@ -29,6 +33,16 @@ Books on map shows every library book on your world map and minimap, checks them
 - **Filters:** hide collected books, or show only the sets for your level.
 - **Ten languages:** English, French, German, Spanish, Italian, Portuguese, Russian, Korean, Simplified Chinese and Traditional Chinese. The addon follows your game language, or you can pick another one in the menu at the top of the window.
 - **Data broker support:** works with Titan Panel, ChocolateBar, ElvUI, Bazooka and similar addons.
+
+### Screenshots
+
+<p align="center">
+  <img src="screenshots/banner.png" alt="Books on Map Forever" width="900"><br><br>
+  <img src="screenshots/book_tracker.png" alt="Book tracker" width="900"><br><br>
+  <img src="screenshots/rewards.png" alt="Rewards" width="900"><br><br>
+  <img src="screenshots/group_mode.png" alt="Group mode" width="900"><br><br>
+  <img src="screenshots/languages.png" alt="Languages" width="900">
+</p>
 
 ### Installation
 
