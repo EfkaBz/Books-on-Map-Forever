@@ -228,3 +228,10 @@ L["Eastern Plaguelands"] = "Terre Infette Orientali"
 L["Light's Hope Chapel, Eastern Plaguelands"] = "Cappella della Luce, Terre Infette Orientali"
 L["Everlook, Winterspring"] = "Lungavista, Fontefredda"
 L["Caer Darrow keep, Western Plaguelands"] = "Mastio di Caer Darrow, Terre Infette Occidentali"
+
+-- world map button
+L["Left Click"] = "Clic sinistro"
+L["Right Click"] = "Clic destro"
+L["Show the books"] = "Mostra i libri"
+L["Hide the books"] = "Nascondi i libri"
+L["Open book list"] = "Apri l'elenco dei libri"

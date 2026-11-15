@@ -60,6 +60,7 @@ function ns.Refresh()
   ns.RefreshOptions()
   ns.RefreshRoute()
   ns.RefreshBroker()
+  ns.RefreshMapButton()
 end
 
 function ns.SetDone(b, value, silent)
@@ -97,6 +98,7 @@ f:SetScript("OnEvent", function(_, event, arg1)
   elseif event == "PLAYER_LOGIN" then
     removeOtherFactionBooks() -- again, in case the faction wasn't known yet at ADDON_LOADED
     ns.InitMap()
+    ns.InitMapButton()
     ns.InitBroker()
     ns.InitMinimapButton() -- (after the broker: it's the button's data object)
     ns.InitMinimapPins()

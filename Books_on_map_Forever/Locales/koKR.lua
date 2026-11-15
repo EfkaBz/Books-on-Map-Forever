@@ -228,3 +228,10 @@ L["Eastern Plaguelands"] = "동부 역병지대"
 L["Light's Hope Chapel, Eastern Plaguelands"] = "희망의 빛 예배당, 동부 역병지대"
 L["Everlook, Winterspring"] = "눈망루 마을, 여명의 설원"
 L["Caer Darrow keep, Western Plaguelands"] = "카엘 다로우 성채, 서부 역병지대"
+
+-- world map button
+L["Left Click"] = "왼쪽 클릭"
+L["Right Click"] = "오른쪽 클릭"
+L["Show the books"] = "책 표시"
+L["Hide the books"] = "책 숨기기"
+L["Open book list"] = "책 목록 열기"

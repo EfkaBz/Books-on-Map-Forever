@@ -228,3 +228,10 @@ L["Eastern Plaguelands"] = "Terras Pestilentas Orientais"
 L["Light's Hope Chapel, Eastern Plaguelands"] = "Capela Esperança da Luz, Terras Pestilentas Orientais"
 L["Everlook, Winterspring"] = "Visteterna, Hibérnia"
 L["Caer Darrow keep, Western Plaguelands"] = "Torre de Castro das Flechas, Terras Pestilentas Ocidentais"
+
+-- world map button
+L["Left Click"] = "Clique esquerdo"
+L["Right Click"] = "Clique direito"
+L["Show the books"] = "Mostrar os livros"
+L["Hide the books"] = "Ocultar os livros"
+L["Open book list"] = "Abrir a lista de livros"

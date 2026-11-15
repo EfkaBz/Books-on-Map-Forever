@@ -237,3 +237,10 @@ L["Eastern Plaguelands"] = "Maleterres de l'est"
 L["Light's Hope Chapel, Eastern Plaguelands"] = "Chapelle de l'Espoir de Lumière, Maleterres de l'est"
 L["Everlook, Winterspring"] = "Long-Guet, Berceau-de-l'Hiver"
 L["Caer Darrow keep, Western Plaguelands"] = "Donjon de Caer Darrow, Maleterres de l'ouest"
+
+-- world map button
+L["Left Click"] = "Clic gauche"
+L["Right Click"] = "Clic droit"
+L["Show the books"] = "Afficher les livres"
+L["Hide the books"] = "Masquer les livres"
+L["Open book list"] = "Ouvrir la liste des livres"

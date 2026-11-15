@@ -228,3 +228,10 @@ L["Eastern Plaguelands"] = "東瘟疫之地"
 L["Light's Hope Chapel, Eastern Plaguelands"] = "聖光之願禮拜堂，東瘟疫之地"
 L["Everlook, Winterspring"] = "永望鎮，冬泉谷"
 L["Caer Darrow keep, Western Plaguelands"] = "凱爾達隆主堡，西瘟疫之地"
+
+-- world map button
+L["Left Click"] = "左鍵點擊"
+L["Right Click"] = "右鍵點擊"
+L["Show the books"] = "顯示書籍"
+L["Hide the books"] = "隱藏書籍"
+L["Open book list"] = "開啟書籍列表"

@@ -228,3 +228,10 @@ L["Eastern Plaguelands"] = "Восточные Чумные земли"
 L["Light's Hope Chapel, Eastern Plaguelands"] = "Часовня Последней Надежды, Восточные Чумные земли"
 L["Everlook, Winterspring"] = "Круговзор, Зимние Ключи"
 L["Caer Darrow keep, Western Plaguelands"] = "Цитадель, Каэр Дарроу, Западные Чумные земли"
+
+-- world map button
+L["Left Click"] = "Левый клик"
+L["Right Click"] = "Правый клик"
+L["Show the books"] = "Показать книги"
+L["Hide the books"] = "Скрыть книги"
+L["Open book list"] = "Открыть список книг"
