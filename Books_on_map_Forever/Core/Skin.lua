@@ -1,6 +1,7 @@
--- Books on map (Forever): custom skin (no game templates): rounded gradient windows with a soft
+-- Books on map (Forever): skin. Default theme: custom (no game templates): rounded gradient windows with a soft
 -- shadow, gold trim, eased animations (open/close, hover fades, progress fill,
--- glint and shine), buttons, checkboxes, sliders, scroll bars, sections
+-- glint and shine), buttons, checkboxes, sliders, scroll bars, sections. Forever theme: the
+-- game's own frames and widgets (see Themes below)
 local ADDON, ns = ...
 
 local S = {}
@@ -35,8 +36,73 @@ local C = {
   fill1    = hex("#9BE6FF"), fill2 = hex("#1E6FD0"),
   gold1    = hex("#FFE38A"), gold2 = hex("#C4791A"), -- progress bar fill
 }
+C.glow = { 0.3, 0.72, 1, 1 } -- additive halos (hover, selection)
 C.accent, C.border, C.card, C.bg = C.gold, C.trim, C.well, C.bg2
 S.C = C
+
+-- Themes -------------------------------------------------------------------
+-- "default": the addon's own look (above). "forever": the game's own interface, as in Dungeon
+-- Quests Forever: gold-bordered dialog windows, tooltip-bordered panels, panel buttons, check
+-- boxes and sliders of the game, gold texts. The windows are built differently, so the theme
+-- is set once at load (Core.lua, before any window exists) and changing it reloads the UI.
+local FOREVER = {
+  bg1 = { 0.09, 0.07, 0.05, 1 }, bg2 = { 0.03, 0.025, 0.02, 1 },
+  well = { 0.04, 0.03, 0.02, 1 },
+  trim = { 0.6, 0.5, 0.2, 1 }, ring = { 1, 0.82, 0, 1 },
+  rule = { 0.32, 0.26, 0.12, 1 },
+  gold = { 1, 0.82, 0, 1 }, -- the game's yellow (GameFontNormal)
+  text = { 1, 1, 1, 1 },
+  muted = { 0.66, 0.62, 0.52, 1 }, dim = { 0.72, 0.68, 0.58, 1 },
+  btn1 = { 0.2, 0.15, 0.08, 1 }, btn2 = { 0.08, 0.06, 0.03, 1 },
+  primary1 = { 0.55, 0.12, 0.08, 1 }, primary2 = { 0.3, 0.05, 0.03, 1 },
+  pill1 = { 0.35, 0.27, 0.1, 1 }, pill2 = { 0.16, 0.12, 0.05, 1 },
+  fill1 = { 1, 0.9, 0.5, 1 }, fill2 = { 0.8, 0.55, 0.1, 1 },
+  glow = { 1, 0.8, 0.3, 1 },
+}
+
+-- the palette tables are changed in place: modules keep references to them (S.C.gold, ...)
+function S.ApplyTheme(theme)
+  S.FOREVER = theme == "forever"
+  if not S.FOREVER then return end
+  for key, col in pairs(FOREVER) do
+    local t = C[key]
+    t[1], t[2], t[3], t[4] = col[1], col[2], col[3], col[4]
+  end
+end
+
+-- the game's backdrops (Forever theme)
+local DIALOG = {
+  bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+  edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
+  tile = true, tileSize = 32, edgeSize = 24,
+  insets = { left = 6, right = 6, top = 6, bottom = 6 },
+}
+local SMALL = { -- small panels (route tracker, alerts, tabs, menus): dark dialog, thin gold border
+  bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+  edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
+  tile = true, tileSize = 32, edgeSize = 16,
+  insets = { left = 4, right = 4, top = 4, bottom = 4 },
+}
+local SLIDER = {
+  bgFile = "Interface\\Buttons\\UI-SliderBar-Background",
+  edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
+  tile = true, tileSize = 8, edgeSize = 8,
+  insets = { left = 3, right = 3, top = 6, bottom = 6 },
+}
+
+-- sets a game backdrop on any frame (the backdrop mixin is added when the frame has none)
+local function backdrop(f, def, bg, border)
+  if not f.SetBackdrop then
+    if not (Mixin and BackdropTemplateMixin) then return end
+    Mixin(f, BackdropTemplateMixin)
+    f:HookScript("OnSizeChanged", f.OnBackdropSizeChanged)
+  end
+  f:SetBackdrop(def)
+  f:SetBackdropColor(unpack(bg or { 1, 1, 1, 1 }))
+  f:SetBackdropBorderColor(unpack(border or { 1, 1, 1, 1 }))
+  f.SetBorderColor = function(self, r, g, b, a) self:SetBackdropBorderColor(r, g, b, a or 1) end
+  f.borders = f.borders or {}
+end
 
 local function color(t, a) return t[1], t[2], t[3], a or t[4] end
 S.Color = color
@@ -191,7 +257,8 @@ local POINTS = {
   { "LEFT", "MID" }, { "CENTER", "MID" }, { "RIGHT", "MID" },
   { "BOTTOMLEFT", "BOTTOM" }, { "BOTTOM", "BOTTOM" }, { "BOTTOMRIGHT", "BOTTOM" },
 }
-local function slice9(f, file, size, margin, cs, layer, sub)
+-- (rel: the region whose corners it covers, the frame itself by default)
+local function slice9(f, file, size, margin, cs, layer, sub, rel)
   local m = margin / size
   local u = { 0, m, 1 - m, 1 }
   local tex = {}
@@ -204,7 +271,7 @@ local function slice9(f, file, size, margin, cs, layer, sub)
     tex[p[1]] = t
   end
   for _, k in ipairs({ "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }) do
-    tex[k]:SetSize(cs, cs); tex[k]:SetPoint(k)
+    tex[k]:SetSize(cs, cs); tex[k]:SetPoint(k, rel or f, k)
   end
   tex.TOP:SetPoint("TOPLEFT", tex.TOPLEFT, "TOPRIGHT"); tex.TOP:SetPoint("BOTTOMRIGHT", tex.TOPRIGHT, "BOTTOMLEFT")
   tex.BOTTOM:SetPoint("TOPLEFT", tex.BOTTOMLEFT, "TOPRIGHT"); tex.BOTTOM:SetPoint("BOTTOMRIGHT", tex.BOTTOMRIGHT, "BOTTOMLEFT")
@@ -218,6 +285,10 @@ end
 function S.Shadow(f, size, alpha, col)
   size = size or 14
   local holder = CreateFrame("Frame", nil, f)
+  if S.FOREVER then -- the game's frames have no halo (an empty holder: callers read f.shadow)
+    f.shadow = holder
+    return holder
+  end
   holder:SetPoint("TOPLEFT", -size, size)
   holder:SetPoint("BOTTOMRIGHT", size, -size)
   holder:SetFrameLevel(math.max(0, f:GetFrameLevel() - 1))
@@ -233,6 +304,10 @@ end
 -- pre-drawn rounded textures so the corners line up exactly
 function S.Rounded(f, r, top, bottom, border)
   r, top, bottom = r or 12, top or C.bg1, bottom or C.bg2
+  if S.FOREVER then -- the game's small dialog frame: dark background, thin gold border
+    backdrop(f, SMALL, { 1, 1, 1, 1 }, border or { 1, 1, 1, 1 })
+    return f
+  end
   local cs = r * 16 / 12 -- textures: radius 12 in a 16px margin
   for _, t in pairs(slice9(f, MEDIA .. "RoundFill", 64, 16, cs, "BACKGROUND", -7)) do
     if t.row == "TOP" then t:SetVertexColor(color(top))
@@ -273,9 +348,11 @@ function S.Icon(parent, size, layer)
   tex:SetPoint("BOTTOMRIGHT", -1, 1)
   tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
   holder.tex = tex
-  local gloss = holder:CreateTexture(nil, "OVERLAY")
-  gloss:SetAllPoints(tex)
-  gloss:SetTexture(MEDIA .. "Gloss")
+  if not S.FOREVER then
+    local gloss = holder:CreateTexture(nil, "OVERLAY")
+    gloss:SetAllPoints(tex)
+    gloss:SetTexture(MEDIA .. "Gloss")
+  end
   return holder
 end
 
@@ -292,7 +369,7 @@ function S.RowHighlight(row)
   hl:SetAllPoints()
   local wash = hl:CreateTexture(nil, "BACKGROUND", nil, 1)
   wash:SetAllPoints()
-  gradient(wash, { 0.36, 0.78, 1, 0.14 }, { 0.36, 0.78, 1, 0 }, true)
+  gradient(wash, { C.glow[1], C.glow[2], C.glow[3], 0.14 }, { C.glow[1], C.glow[2], C.glow[3], 0 }, true)
   local bar = hl:CreateTexture(nil, "ARTWORK")
   bar:SetPoint("TOPLEFT"); bar:SetPoint("BOTTOMLEFT"); bar:SetWidth(2)
   bar:SetColorTexture(color(C.gold))
@@ -302,6 +379,12 @@ end
 
 -- Close button: gold x, red-gold glow on hover --------------------------------
 function S.CloseButton(parent, onClick)
+  if S.FOREVER then -- the game's red x
+    local b = CreateFrame("Button", nil, parent, "UIPanelCloseButton")
+    b:SetSize(28, 28)
+    b:SetScript("OnClick", onClick or function() S.Close(parent) end)
+    return b
+  end
   local b = CreateFrame("Button", nil, parent)
   b:SetSize(22, 22)
   local glow = b:CreateTexture(nil, "BACKGROUND")
@@ -411,6 +494,7 @@ end
 -- rounded box corners (radius 12), smaller depths give tighter corners
 -- the glow breathes slowly
 function S.EdgeGlow(f, depth, alpha)
+  if S.FOREVER then return end -- not on the game's frames
   depth, alpha = depth or 48, alpha or 0.24
   local pieces = slice9(f, MEDIA .. "RoundGlow", 128, 48, depth, "BACKGROUND", -5)
   for _, t in pairs(pieces) do t:SetVertexColor(0.24, 0.55, 1, alpha) end
@@ -425,8 +509,98 @@ function S.EdgeGlow(f, depth, alpha)
   end)
 end
 
+-- Forever theme: the game's portrait window, as in Dungeon Quests Forever: the addon icon in the
+-- round portrait, the title in the strip along the top, the red close button, spellbook
+-- parchment, and a dark box holding the content (light texts stay readable). Its header is
+-- FOREVER_SHIFT px taller than the default one: f.shift tells the callers how much lower the
+-- content starts. f.titleBar is the row under the title, right of the portrait (drag handle,
+-- controls); f.corner is what right-side controls anchor to (the close button by default).
+local FOREVER_SHIFT, FOREVER_HEADER = 22, 60
+
+local function atlasExists(name)
+  return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) ~= nil
+end
+
+-- spellbook page behind a window, from `top` px under its top edge
+local function parchment(f, top)
+  local page = f:CreateTexture(nil, "BACKGROUND", nil, 2)
+  page:SetPoint("TOPLEFT", 6, -top)
+  page:SetPoint("BOTTOMRIGHT", -6, 6)
+  if atlasExists("spellbook-background-evergreen-left") then
+    page:SetAtlas("spellbook-background-evergreen-left")
+  else
+    page:SetTexture("Interface\\Spellbook\\Spellbook-Page-1")
+    page:SetTexCoord(0, 0.86, 0, 0.9)
+  end
+  return page
+end
+
+local function gameWindow(name, parent, width, height, title)
+  local ok, f = pcall(CreateFrame, "Frame", name, parent or UIParent, "PortraitFrameTemplate")
+  if not ok or not f then -- (template missing: the gold-bordered dialog box)
+    f = CreateFrame("Frame", name, parent or UIParent)
+    backdrop(f, DIALOG)
+    f.CloseButton = CreateFrame("Button", nil, f, "UIPanelCloseButton")
+    f.CloseButton:SetPoint("TOPRIGHT", -4, -4)
+  end
+  f:SetSize(width, height + FOREVER_SHIFT)
+  f.shift = FOREVER_SHIFT
+  f:EnableMouse(true)
+  f:SetClampedToScreen(true)
+
+  -- portrait: the addon icon, cut round
+  local tex = (f.PortraitContainer and f.PortraitContainer.portrait) or f.portrait
+  if not tex then
+    tex = f:CreateTexture(nil, "OVERLAY")
+    tex:SetSize(58, 58)
+    tex:SetPoint("TOPLEFT", -5, 7)
+  end
+  tex:SetTexture(ns.ADDON_ICON)
+  if tex.SetMask then pcall(tex.SetMask, tex, "Interface\\CharacterFrame\\TempPortraitAlphaMask") end
+  f.portraitTex = tex
+
+  -- title in the strip along the top
+  f.title = f.TitleText or (f.TitleContainer and f.TitleContainer.TitleText)
+  if not f.title then
+    f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.title:SetPoint("TOP", 0, -5)
+  end
+  f.title:SetText(title or "")
+
+  -- spellbook page, and the dark box the content sits in: drawn on the window itself, above the
+  -- page and under every text (f.inset only places it: callers may move its bottom up to leave
+  -- room for buttons on the page)
+  f.parchment = parchment(f, FOREVER_HEADER)
+  f.inset = CreateFrame("Frame", nil, f)
+  f.inset:SetPoint("TOPLEFT", 8, -(FOREVER_HEADER + 2))
+  f.inset:SetPoint("BOTTOMRIGHT", -8, 8)
+  for _, t in pairs(slice9(f, MEDIA .. "RoundFill", 64, 16, 8, "BACKGROUND", 3, f.inset)) do
+    t:SetVertexColor(0.03, 0.025, 0.02, 0.88)
+  end
+  for _, t in pairs(slice9(f, MEDIA .. "RoundEdge", 64, 16, 8, "BACKGROUND", 4, f.inset)) do
+    t:SetVertexColor(0.6, 0.5, 0.2, 0.9)
+  end
+
+  -- row under the title, right of the portrait
+  local bar = CreateFrame("Frame", nil, f)
+  bar:SetPoint("TOPLEFT", 58, -22)
+  bar:SetPoint("TOPRIGHT", -6, -22)
+  bar:SetHeight(FOREVER_HEADER - 24)
+  f.titleBar = bar
+  f.corner = CreateFrame("Frame", nil, bar)
+  f.corner:SetSize(1, 1)
+  f.corner:SetPoint("RIGHT", bar, "RIGHT", 0, 0)
+
+  -- the template's close button goes through HideUIPanel (blocked in combat)
+  f.close = f.CloseButton
+  f.close:SetScript("OnClick", function() S.Close(f) end)
+  f:HookScript("OnShow", function(self) S.AnimateOpen(self, self.openDX, self.openDY) end)
+  return f
+end
+
 -- rounded gradient window, shadow, title row with a fading gold rule under it
 function S.Window(name, parent, width, height, title)
+  if S.FOREVER then return gameWindow(name, parent, width, height, title) end
   local f = CreateFrame("Frame", name, parent or UIParent)
   f:SetSize(width, height)
   f:EnableMouse(true)
@@ -434,6 +608,7 @@ function S.Window(name, parent, width, height, title)
   S.Shadow(f, 16, 0.5, { 0.12, 0.4, 0.95 }) -- blue halo outside
   S.Rounded(f, 12)
   S.EdgeGlow(f, 48, 0.18)
+  f.shift = 0
 
   local bar = CreateFrame("Frame", nil, f)
   bar:SetPoint("TOPLEFT", 1, -1)
@@ -450,6 +625,7 @@ function S.Window(name, parent, width, height, title)
 
   f.close = S.CloseButton(f)
   f.close:SetPoint("RIGHT", bar, "RIGHT", -8, 0)
+  f.corner = f.close
   f.close:SetFrameLevel(bar:GetFrameLevel() + 5) -- above the title bar, which takes the mouse for dragging
   f:HookScript("OnShow", function(self) S.AnimateOpen(self, self.openDX, self.openDY) end)
   return f
@@ -490,8 +666,32 @@ function S.Section(parent, text)
 end
 
 -- Buttons ------------------------------------------------------------------
+-- Forever theme: the game's red panel button; a text too wide for it takes the small font
+local function gameButton(parent, text, width, height, onClick)
+  local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+  b:SetSize(width or 120, height or 26)
+  b.fitWidth = (width or 120) - 8
+  local setText = b.SetText
+  local function fit(self)
+    local small = self.text and self.text:GetStringWidth() > self.fitWidth
+    self:SetNormalFontObject(small and GameFontNormalSmall or GameFontNormal)
+    self:SetHighlightFontObject(small and GameFontHighlightSmall or GameFontHighlight)
+    self:SetDisabledFontObject(small and GameFontDisableSmall or GameFontDisable)
+  end
+  function b:SetText(t)
+    self:SetNormalFontObject(GameFontNormal) -- measured at full size first
+    setText(self, t or "")
+    self.text = self:GetFontString()
+    fit(self)
+  end
+  b:SetText(text)
+  b:SetScript("OnClick", onClick)
+  return b
+end
+
 -- gradient button with gloss; hover = border tweens to gold + inner glow. primary = gold
 function S.Button(parent, text, width, height, onClick, primary)
+  if S.FOREVER then return gameButton(parent, text, width, height, onClick) end
   local b = CreateFrame("Button", nil, parent)
   b:SetSize(width or 120, height or 26)
   local border = primary and C.ring or C.trim
@@ -540,8 +740,10 @@ function S.Dropdown(parent, options, width, menuWidth, getValue, onSelect, toolt
   b.fitWidth = width - 22 -- room for the chevron
   b.text:ClearAllPoints()
   b.text:SetPoint("CENTER", -6, 0)
-  b:SetScript("OnMouseDown", nil)
-  b:SetScript("OnMouseUp", nil)
+  if not S.FOREVER then -- (the game's button keeps its own pressed look)
+    b:SetScript("OnMouseDown", nil)
+    b:SetScript("OnMouseUp", nil)
+  end
 
   -- chevron drawn with two rotated lines (the game font has no arrow glyph)
   local function chevronBar(x)
@@ -674,8 +876,29 @@ end
 
 -- Checkbox -----------------------------------------------------------------
 -- dark well, trim border, gold check that pops in; the label is part of the clickable area
+-- the label part, shared by both themes
+local function checkLabel(c, label)
+  c.text = S.Text(c, 13, "text", "medium")
+  c.text:SetPoint("LEFT", c, "RIGHT", S.FOREVER and 4 or 8, 0)
+  c.text:SetText(label)
+  c:SetHitRectInsets(0, -(c.text:GetStringWidth() + 10), -3, -3)
+  c:HookScript("OnEnter", function(self) self.text:SetTextColor(1, 1, 1) end)
+  c:HookScript("OnLeave", function(self) self.text:SetTextColor(color(C.text)) end)
+  function c:FitLabel(maxWidth)
+    S.FitText(self.text, maxWidth, 13)
+    self:SetHitRectInsets(0, -(math.min(self.text:GetStringWidth(), maxWidth) + 10), -3, -3)
+  end
+end
+
 function S.Check(parent, label, size)
   size = size or 18
+  if S.FOREVER then -- the game's check box (a bit bigger: its art has a margin)
+    local c = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+    c:SetSize(size + 8, size + 8)
+    if c.text then c.text:SetText("") end -- the template's own label stays empty
+    if label then checkLabel(c, label) end
+    return c
+  end
   local c = CreateFrame("CheckButton", nil, parent)
   c:SetSize(size, size)
   S.Box(c, C.well, C.trim)
@@ -726,18 +949,7 @@ function S.Check(parent, label, size)
   c:HookScript("OnLeave", function(self) self:SetBorderColor(color(C.trim)) end)
   update(c)
 
-  if label then
-    c.text = S.Text(c, 13, "text", "medium")
-    c.text:SetPoint("LEFT", c, "RIGHT", 8, 0)
-    c.text:SetText(label)
-    c:SetHitRectInsets(0, -(c.text:GetStringWidth() + 10), -3, -3)
-    c:HookScript("OnEnter", function(self) self.text:SetTextColor(1, 1, 1) end)
-    c:HookScript("OnLeave", function(self) self.text:SetTextColor(color(C.text)) end)
-    function c:FitLabel(maxWidth)
-      S.FitText(self.text, maxWidth, 13)
-      self:SetHitRectInsets(0, -(math.min(self.text:GetStringWidth(), maxWidth) + 10), -3, -3)
-    end
-  end
+  if label then checkLabel(c, label) end
   return c
 end
 
@@ -753,32 +965,40 @@ function S.Slider(parent, width, min, max, label, onChange)
   s:SetHitRectInsets(0, 0, -6, -6)
   s:EnableMouseWheel(true)
 
-  local track = CreateFrame("Frame", nil, s)
-  track:SetPoint("LEFT"); track:SetPoint("RIGHT"); track:SetHeight(6)
-  track:SetFrameLevel(s:GetFrameLevel())
-  S.Box(track, C.well, C.trim)
+  if S.FOREVER then -- the game's slider: grooved bar, gold-rimmed thumb
+    s:SetHeight(17)
+    backdrop(s, SLIDER)
+    s:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+    local thumb = s:GetThumbTexture()
+    if thumb then thumb:SetSize(32, 32) end
+  else
+    local track = CreateFrame("Frame", nil, s)
+    track:SetPoint("LEFT"); track:SetPoint("RIGHT"); track:SetHeight(6)
+    track:SetFrameLevel(s:GetFrameLevel())
+    S.Box(track, C.well, C.trim)
 
-  local fill = s:CreateTexture(nil, "ARTWORK")
-  fill:SetPoint("TOPLEFT", track, "TOPLEFT", 1, -1)
-  fill:SetPoint("BOTTOMLEFT", track, "BOTTOMLEFT", 1, 1)
-  gradient(fill, C.fill2, C.fill1, true)
+    local fill = s:CreateTexture(nil, "ARTWORK")
+    fill:SetPoint("TOPLEFT", track, "TOPLEFT", 1, -1)
+    fill:SetPoint("BOTTOMLEFT", track, "BOTTOMLEFT", 1, 1)
+    gradient(fill, C.fill2, C.fill1, true)
 
-  local glow = s:CreateTexture(nil, "OVERLAY", nil, 0)
-  glow:SetTexture(MEDIA .. "Glow")
-  glow:SetBlendMode("ADD")
-  glow:SetSize(30, 30)
-  glow:SetVertexColor(0.3, 0.75, 1, 0.6)
-  local thumb = s:CreateTexture(nil, "OVERLAY", nil, 2)
-  thumb:SetTexture(WHITE)
-  thumb:SetSize(8, 16)
-  gradient(thumb, C.fill1, C.fill2)
-  s:SetThumbTexture(thumb)
-  local edge = s:CreateTexture(nil, "OVERLAY", nil, 1)
-  edge:SetPoint("TOPLEFT", thumb, -1, 1); edge:SetPoint("BOTTOMRIGHT", thumb, 1, -1)
-  edge:SetColorTexture(0, 0, 0, 1)
-  glow:SetPoint("CENTER", thumb)
-  fill:SetPoint("RIGHT", thumb, "CENTER")
-  S.HoverFade(s, glow)
+    local glow = s:CreateTexture(nil, "OVERLAY", nil, 0)
+    glow:SetTexture(MEDIA .. "Glow")
+    glow:SetBlendMode("ADD")
+    glow:SetSize(30, 30)
+    glow:SetVertexColor(0.3, 0.75, 1, 0.6)
+    local thumb = s:CreateTexture(nil, "OVERLAY", nil, 2)
+    thumb:SetTexture(WHITE)
+    thumb:SetSize(8, 16)
+    gradient(thumb, C.fill1, C.fill2)
+    s:SetThumbTexture(thumb)
+    local edge = s:CreateTexture(nil, "OVERLAY", nil, 1)
+    edge:SetPoint("TOPLEFT", thumb, -1, 1); edge:SetPoint("BOTTOMRIGHT", thumb, 1, -1)
+    edge:SetColorTexture(0, 0, 0, 1)
+    glow:SetPoint("CENTER", thumb)
+    fill:SetPoint("RIGHT", thumb, "CENTER")
+    S.HoverFade(s, glow)
+  end
 
   s.label = S.Text(s, 12, "text", "medium")
   s.label:SetPoint("BOTTOMLEFT", s, "TOPLEFT", 0, 5)

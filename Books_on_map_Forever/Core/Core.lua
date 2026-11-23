@@ -9,9 +9,9 @@ ns.PREFIX = "|cff33ff99Books on map|r: "
 ns.COMPLETION_SOUND = "Interface\\AddOns\\Books_on_map_Forever\\adds\\Sounds\\Completion.ogg"
 
 -- library reward goals (books): necklace, ring, bow/crest/light, necklace/shield
-ns.GOALS = { 10, 20, 25, 38 }
+ns.GOALS = { 10, 20, 25, 35 }
 ns.GOAL_LABELS = { [10] = "Necklace unlocked", [20] = "Ring unlocked", [25] = "Bow, crest or light unlocked",
-  [38] = "Necklace or shield unlocked" }
+  [35] = "Necklace or shield unlocked" }
 
 -- books the other faction can't loot (e.g. Rumi for the Horde): removed from the list (once, at load)
 local function removeOtherFactionBooks()
@@ -91,6 +91,7 @@ f:SetScript("OnEvent", function(_, event, arg1)
     ns.db = BooksOnMapForeverDB
     BooksOnMapForeverGlobal = BooksOnMapForeverGlobal or {} -- account-wide (welcome page)
     ns.global = BooksOnMapForeverGlobal
+    ns.Skin.ApplyTheme(ns.global.theme) -- before any window is built (changing it reloads the UI)
     ns.db.collected = ns.db.collected or {}
     removeOtherFactionBooks()
     ns.ApplyLanguage(ns.db.lang)

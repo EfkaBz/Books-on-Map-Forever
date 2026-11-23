@@ -13,7 +13,7 @@ local FEATURES = {
   { "INV_Misc_Bag_08", "Automatic detection", "Books in your bags and books handed in to the library are checked off by themselves." },
   { "Ability_Tracking", "Optimized route", "Your missing books in the best order, with an arrow and Shortest Path or TomTom." },
   { "Ability_Warrior_BattleShout", "Group mode", "See which books your group members still need and help them." },
-  { "INV_Jewelry_Ring_03", "Rewards", "Track the necklace (10), the ring (20), the bow, crest or light (25) and the necklace or shield (38)." },
+  { "INV_Jewelry_Ring_03", "Rewards", "Track the necklace (10), the ring (20), the bow, crest or light (25) and the necklace or shield (35)." },
   { "INV_Misc_Note_01", "New in this version", "Now in 10 languages: pick yours at the top of the window." },
 }
 
@@ -68,19 +68,19 @@ local function create()
   tinsert(UISpecialFrames, f:GetName()) -- close with Escape
 
   f.lang = ns.LanguageSelector(f.titleBar)
-  f.lang:SetPoint("RIGHT", f.close, "LEFT", -8, 0)
+  f.lang:SetPoint("RIGHT", f.corner, "LEFT", -8, 0)
 
   -- Header: big icon, name, version, tagline
   local logo = f:CreateTexture(nil, "ARTWORK")
   logo:SetSize(64, 64)
-  logo:SetPoint("TOPLEFT", PAD, -52)
+  logo:SetPoint("TOPLEFT", PAD, -52 - f.shift)
   logo:SetTexture(ns.ADDON_ICON)
   local halo = f:CreateTexture(nil, "BACKGROUND", nil, 1)
   halo:SetTexture(S.MEDIA .. "Glow")
   halo:SetBlendMode("ADD")
   halo:SetSize(120, 120)
   halo:SetPoint("CENTER", logo)
-  halo:SetVertexColor(0.3, 0.7, 1, 0.45)
+  halo:SetVertexColor(S.C.glow[1], S.C.glow[2], S.C.glow[3], 0.45)
 
   local name = S.Text(f, 20, "text")
   name:SetPoint("TOPLEFT", logo, "TOPRIGHT", 14, -4)
@@ -97,8 +97,8 @@ local function create()
 
   -- Features
   local features = S.Section(f, L["Features"])
-  features:SetPoint("TOPLEFT", PAD, -132)
-  features:SetPoint("TOPRIGHT", -PAD, -132)
+  features:SetPoint("TOPLEFT", PAD, -132 - f.shift)
+  features:SetPoint("TOPRIGHT", -PAD, -132 - f.shift)
 
   local grid = CreateFrame("Frame", nil, f)
   grid:SetPoint("TOPLEFT", features, "BOTTOMLEFT", 0, -10)
@@ -131,6 +131,8 @@ local function create()
   open:SetPoint("RIGHT", start, "LEFT", -8, 0)
   local bug = S.Button(f, L["Report a bug"], 130, 28, ns.ReportBug)
   bug:SetPoint("BOTTOMLEFT", PAD, 16)
+  -- Forever theme: the buttons stand on the parchment, under the dark box
+  if f.inset then f.inset:SetPoint("BOTTOMRIGHT", -8, 52) end
 
   f:HookScript("OnShow", function() f.lang.Refresh() end)
   f:Hide()
@@ -143,17 +145,17 @@ function ns.ShowWelcome()
   if not frame:IsShown() then frame:Show() end
 end
 
--- 2.3.0: the new reward tier at 38 books, announced once per account; a click opens the rewards tab
+-- 2.3.0: the new reward tier at 35 books (38 until 2.3.2), announced once per account; a click opens the rewards tab
 local NEW_TIER_ICON = 281637 -- Antique Bulwark
 local function announceNewTier()
   ns.global.tier38Seen = true
   if ns.db.noToasts then -- alerts turned off: a line in chat instead
-    print(ns.PREFIX .. L["New reward tier!"] .. " " .. L["38 books: 3 new rewards"])
+    print(ns.PREFIX .. L["New reward tier!"] .. " " .. L["35 books: 3 new rewards"])
     return
   end
   local getIcon = C_Item and C_Item.GetItemIconByID or GetItemIcon
   local icon = getIcon(NEW_TIER_ICON) or "Interface\\Icons\\INV_Holiday_Christmas_Present_01"
-  ns.ShowToast("news", icon, L["New reward tier!"], L["38 books: 3 new rewards"],
+  ns.ShowToast("news", icon, L["New reward tier!"], L["35 books: 3 new rewards"],
     L["A necklace or a shield - click to see them"], SOUNDKIT and SOUNDKIT.IG_QUEST_LIST_OPEN, ns.OpenRewards)
 end
 ns.AnnounceNewTier = announceNewTier -- (also played by /bom test)

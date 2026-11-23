@@ -22,7 +22,7 @@ local TIERS = {
     { 277258, "Crest of Elucidation" },
     { 277260, "Researcher's Night Light" },
   } },
-  { goal = 38, label = "38 books: necklace or shield", items = {
+  { goal = 35, label = "35 books: necklace or shield", items = {
     { 281637, "Antique Bulwark" },
     { 281636, "Museum Keeper's Chain" },
     { 277202, "Artifact Seeker's Pendant" },
@@ -135,7 +135,7 @@ end
 local function createPanel(f)
   local p = ns.CreateSidePanel(f, L["Rewards"], PANEL_W)
 
-  local y = 46
+  local y = 46 + p.shift
   p.tiers, p.items = {}, {}
   for _, tier in ipairs(TIERS) do
     p.tiers[#p.tiers + 1] = createTier(p, tier, y)
@@ -167,5 +167,5 @@ end
 function ns.CreateRewardsTab(f)
   panel = createPanel(f)
   ns.AddSideTab(f, "rewards", "Interface\\Icons\\INV_Holiday_Christmas_Present_01", -- wrapped gift
-    L["Rewards"], L["Library rewards at 10, 20, 25 and 38 books"], panel)
+    L["Rewards"], L["Library rewards at 10, 20, 25 and 35 books"], panel)
 end

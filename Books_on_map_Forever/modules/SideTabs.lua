@@ -20,7 +20,7 @@ local function createButton(parent, icon)
   t.glow:SetBlendMode("ADD")
   t.glow:SetPoint("CENTER")
   t.glow:SetSize(TAB_SIZE * 1.9, TAB_SIZE * 1.9)
-  t.glow:SetVertexColor(0.3, 0.72, 1, 0.6)
+  t.glow:SetVertexColor(S.C.glow[1], S.C.glow[2], S.C.glow[3], 0.6)
   t.glow:SetAlpha(0)
 
   t.icon = t:CreateTexture(nil, "ARTWORK")
@@ -74,8 +74,11 @@ local function layout()
 end
 
 -- empty panel (window background + title row) to the right of the window, slides out of it
+local panelCount = 0
 function ns.CreateSidePanel(f, title, width)
-  local p = S.Window(nil, f, width, 100, title)
+  -- named: the game's window template (Forever theme) names its parts after the window
+  panelCount = panelCount + 1
+  local p = S.Window("BooksOnMapForeverSidePanel" .. panelCount, f, width, 100, title)
   p:SetPoint("TOPLEFT", f, "TOPRIGHT", 6, 0)
   p.openDX, p.openDY = -24, 0
   p.close:SetScript("OnClick", function() ns.db.sideTab = nil; layout() end)

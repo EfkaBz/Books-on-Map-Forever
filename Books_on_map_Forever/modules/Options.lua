@@ -7,7 +7,7 @@ local S = ns.Skin
 local WIDTH, HEIGHT = 470, 760
 local ROW_H, HEADER_H = 36, 26
 local BESIDE_SLIDER = 225 -- width of a settings label on the same line as a size slider
-local GOAL_NECKLACE, GOAL_RING, GOAL_25, GOAL_38 = unpack(ns.GOALS)
+local GOAL_NECKLACE, GOAL_RING, GOAL_25, GOAL_35 = unpack(ns.GOALS)
 
 local SETS = {
   { id = 1, label = "Starting set" },
@@ -23,11 +23,12 @@ local layoutList
 local function raisePopup(self) self:SetFrameStrata("FULLSCREEN_DIALOG"); self:Raise() end
 local function lowerPopup(self) self:SetFrameStrata("DIALOG") end
 
--- Language (reloads the UI: names are localized at load); also used by the welcome page
+-- Language and theme (both reload the UI: names are localized and windows built at load);
+-- data = the function that saves the new choice
 StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD = {
   text = "", -- (set when shown: the saved language isn't known yet when this file loads)
   button1 = OKAY, button2 = CANCEL,
-  OnAccept = function(_, lang) ns.db.lang = lang; ReloadUI() end,
+  OnAccept = function(_, save) save(); ReloadUI() end,
   OnShow = raisePopup, OnHide = lowerPopup,
   timeout = 0, whileDead = true, hideOnEscape = true,
 }
@@ -83,9 +84,25 @@ function ns.LanguageSelector(parent)
     if (ns.db.lang or "auto") ~= value then
       StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD.text = L["The interface will be reloaded to apply the language."]
       local d = StaticPopup_Show("BOOKSONMAPFOREVER_RELOAD")
-      if d then d.data = value end
+      if d then d.data = function() ns.db.lang = value end end
     end
   end, L["Language"])
+end
+
+-- theme menu: the addon's own look or the game's (Forever) interface, for the whole account;
+-- picking the other one asks to reload
+function ns.ThemeSelector(parent)
+  local options = {
+    { "default", L["Default"], L["Default"] .. " (Books on map)" },
+    { "forever", "Forever", "Forever (" .. L["game interface"] .. ")" },
+  }
+  return S.Dropdown(parent, options, 74, 200, function() return ns.global.theme or "default" end, function(value)
+    if (ns.global.theme or "default") ~= value then
+      StaticPopupDialogs.BOOKSONMAPFOREVER_RELOAD.text = L["The interface will be reloaded to apply the theme."]
+      local d = StaticPopup_Show("BOOKSONMAPFOREVER_RELOAD")
+      if d then d.data = function() ns.global.theme = value ~= "default" and value or nil end end
+    end
+  end, L["Theme"])
 end
 
 local function iconPath(b)
@@ -285,31 +302,39 @@ local function create()
   S.Draggable(f, f.titleBar)
   tinsert(UISpecialFrames, f:GetName()) -- close with Escape
 
-  -- Title bar: addon icon, title, version, language
-  local logo = f.titleBar:CreateTexture(nil, "ARTWORK")
-  logo:SetSize(20, 20)
-  logo:SetPoint("LEFT", 10, 0)
-  logo:SetTexture(ns.ADDON_ICON)
-  f.title:SetPoint("LEFT", logo, "RIGHT", 8, 0)
-
-  local forever = S.Text(f.titleBar, 15, "accent")
-  forever:SetPoint("LEFT", f.title, "RIGHT", 5, 0)
-  forever:SetText("Forever")
-
-  local version = S.Text(f.titleBar, 11, "muted")
-  version:SetPoint("BOTTOMLEFT", forever, "BOTTOMRIGHT", 6, 1)
+  -- Title bar: addon icon, title, version, language (Forever theme: the icon is the window's
+  -- portrait and the title its own, with the version)
   local getMeta = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
-  version:SetText("v" .. (getMeta(ADDON, "Version") or "?"))
+  local versionText = "v" .. (getMeta(ADDON, "Version") or "?")
+  if S.FOREVER then
+    f.title:SetText("Books on map Forever  |cffd0d0d0" .. versionText .. "|r")
+  else
+    local logo = f.titleBar:CreateTexture(nil, "ARTWORK")
+    logo:SetSize(20, 20)
+    logo:SetPoint("LEFT", 10, 0)
+    logo:SetTexture(ns.ADDON_ICON)
+    f.title:SetPoint("LEFT", logo, "RIGHT", 8, 0)
+
+    local forever = S.Text(f.titleBar, 15, "accent")
+    forever:SetPoint("LEFT", f.title, "RIGHT", 5, 0)
+    forever:SetText("Forever")
+
+    local version = S.Text(f.titleBar, 11, "muted")
+    version:SetPoint("BOTTOMLEFT", forever, "BOTTOMRIGHT", 6, 1)
+    version:SetText(versionText)
+  end
 
   f.lang = ns.LanguageSelector(f.titleBar)
-  f.lang:SetPoint("RIGHT", f.close, "LEFT", -8, 0)
+  f.lang:SetPoint("RIGHT", f.corner, "LEFT", -8, 0)
   local bug = ns.BugButton(f.titleBar)
   bug:SetPoint("RIGHT", f.lang, "LEFT", -6, 0)
+  f.theme = ns.ThemeSelector(f.titleBar)
+  f.theme:SetPoint("RIGHT", bug, "LEFT", -6, 0)
 
   -- Progress (every book, with the reward goals marked on the bar)
   local progress = S.Section(f, L["Progress"])
-  progress:SetPoint("TOPLEFT", PAD, -48)
-  progress:SetPoint("TOPRIGHT", -PAD, -48)
+  progress:SetPoint("TOPLEFT", PAD, -48 - f.shift)
+  progress:SetPoint("TOPRIGHT", -PAD, -48 - f.shift)
   f.barText = progress.right
 
   f.bar = S.ProgressBar(f, 12)
@@ -336,7 +361,7 @@ local function create()
   goalMark(GOAL_NECKLACE, L["10 books: necklace"])
   goalMark(GOAL_RING, L["20 books: ring"])
   goalMark(GOAL_25, L["25 books: bow, crest or light"])
-  goalMark(GOAL_38, L["38 books: necklace or shield"])
+  goalMark(GOAL_35, L["35 books: necklace or shield"])
   f.endMark = goalMark(nil, nil)
   f.endMark.notch:Hide()
   f.placeGoals = function()
@@ -377,8 +402,8 @@ local function create()
 
   -- Settings: show icons + icon size (world map, then minimap)
   local settings = S.Section(f, L["Settings"])
-  settings:SetPoint("TOPLEFT", PAD, -116)
-  settings:SetPoint("TOPRIGHT", -PAD, -116)
+  settings:SetPoint("TOPLEFT", PAD, -116 - f.shift)
+  settings:SetPoint("TOPRIGHT", -PAD, -116 - f.shift)
 
   -- folding: each section body slides closed, the book list takes the room
   ns.db.folded = ns.db.folded or {}
@@ -487,6 +512,8 @@ local function create()
   hideBtn:SetPoint("LEFT", showBtn, "RIGHT", 8, 0)
   local routeBtn = S.Button(f, L["Optimized route"], 150, 26, function() ns.ToggleRoute() end, true)
   routeBtn:SetPoint("BOTTOMRIGHT", -PAD, 14)
+  -- Forever theme: the buttons stand on the parchment, under the dark box
+  if f.inset then f.inset:SetPoint("BOTTOMRIGHT", -8, 48) end
 
   ns.CreateRewardsTab(f)
   ns.CreateGroupTab(f)

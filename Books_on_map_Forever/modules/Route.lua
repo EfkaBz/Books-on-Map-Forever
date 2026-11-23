@@ -213,6 +213,7 @@ local function createTracker()
   strip:SetPoint("BOTTOMLEFT", 1, 12)
   strip:SetWidth(2)
   strip:SetColorTexture(S.Color(S.C.accent))
+  strip:SetShown(not S.FOREVER) -- (the Forever theme's gold border already frames it)
 
   local icon = S.Icon(f, 34)
   icon:SetPoint("TOPLEFT", 14, -12)

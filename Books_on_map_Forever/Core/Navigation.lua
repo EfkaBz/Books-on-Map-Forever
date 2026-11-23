@@ -7,7 +7,7 @@ local L = ns.L
 local function spf()
   local addon = ShortestPathForever
   local api = type(addon) == "table" and addon.API
-  if type(api) == "table" and api.version == 1 then return api end
+  if type(api) == "table" and (api.version == 1 or api.version == 2) then return api end
 end
 
 local function has(api, name) return api and type(api[name]) == "function" end

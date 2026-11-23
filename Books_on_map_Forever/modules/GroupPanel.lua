@@ -80,7 +80,7 @@ local function createBlock(parent, width)
     glow:SetBlendMode("ADD")
     glow:SetPoint("CENTER")
     glow:SetSize(ICON * 2, ICON * 2)
-    glow:SetVertexColor(0.35, 0.78, 1, 0.8)
+    glow:SetVertexColor(S.C.glow[1], S.C.glow[2], S.C.glow[3], 0.8)
     btn.book = b
     btn:SetScript("OnEnter", iconTooltip)
     btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -218,16 +218,16 @@ end
 
 function ns.CreateGroupTab(f)
   panel = ns.CreateSidePanel(f, L["Group"], PANEL_W)
-  panel:SetHeight(PANEL_H)
+  panel:SetHeight(PANEL_H + panel.shift)
 
   local legend = S.Text(panel, 11, "muted")
-  legend:SetPoint("TOP", 0, -44)
+  legend:SetPoint("TOP", 0, -44 - panel.shift)
   legend:SetJustifyH("CENTER")
   legend:SetText(L["Greyed out = missing  -  Click: map"])
   S.FitText(legend, PANEL_W - 24, 11)
 
   local scroll, content = S.Scroll(panel)
-  scroll:SetPoint("TOPLEFT", 14, -64)
+  scroll:SetPoint("TOPLEFT", 14, -64 - panel.shift)
   scroll:SetPoint("BOTTOMRIGHT", -24, 14)
   content:SetWidth(PANEL_W - 14 - 24)
   panel.content = content
