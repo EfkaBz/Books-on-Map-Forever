@@ -528,6 +528,56 @@ function ns.ToggleOptions()
   if frame:IsShown() then S.Close(frame) else frame:Show() end
 end
 
+-- entry in the game's Settings > AddOns list: opens our window, so the minimap button can stay hidden
+local function closeGameSettings()
+  if SettingsPanel and SettingsPanel:IsShown() then HideUIPanel(SettingsPanel) end
+  if InterfaceOptionsFrame and InterfaceOptionsFrame:IsShown() then HideUIPanel(InterfaceOptionsFrame) end
+  if GameMenuFrame and GameMenuFrame:IsShown() then HideUIPanel(GameMenuFrame) end
+end
+
+local function openFromSettings()
+  closeGameSettings()
+  frame = frame or create()
+  if not frame:IsShown() then frame:Show() end
+end
+
+local function buildSettingsPanel(panel)
+  local icon = S.Icon(panel, 40)
+  icon:SetPoint("TOPLEFT", 16, -16)
+  icon.tex:SetTexture(ns.ADDON_ICON)
+  icon.tex:SetTexCoord(0, 1, 0, 1)
+  local title = S.Text(panel, 18, "gold", "extrabold")
+  title:SetPoint("LEFT", icon, "RIGHT", 12, 4)
+  title:SetText("Books on map (Forever)")
+  local version = S.Text(panel, 12, "muted")
+  version:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -3)
+  version:SetText("v" .. (C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata)(ADDON, "Version"))
+
+  local hint = S.Text(panel, 13, "text", "medium")
+  hint:SetPoint("TOPLEFT", icon, "BOTTOMLEFT", 0, -18)
+  hint:SetPoint("RIGHT", panel, "RIGHT", -16, 0)
+  hint:SetJustifyH("LEFT")
+  hint:SetText(L["All settings are in the addon window. You can also open it with /bom."])
+
+  local open = S.Button(panel, L["Open book list"], 200, 28, openFromSettings, true)
+  open:SetPoint("TOPLEFT", hint, "BOTTOMLEFT", 0, -14)
+end
+
+local function registerSettings()
+  local panel = CreateFrame("Frame")
+  panel.name = "Books on map (Forever)"
+  panel:SetScript("OnShow", function(self)
+    if not self.built then self.built = true; buildSettingsPanel(self) end -- built late: theme and language are loaded
+  end)
+  if Settings and Settings.RegisterCanvasLayoutCategory then
+    local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+    Settings.RegisterAddOnCategory(category)
+  elseif InterfaceOptions_AddCategory then
+    InterfaceOptions_AddCategory(panel)
+  end
+end
+registerSettings()
+
 -- opens the addon on its rewards tab
 function ns.OpenRewards()
   ns.OpenSideTab("rewards")
