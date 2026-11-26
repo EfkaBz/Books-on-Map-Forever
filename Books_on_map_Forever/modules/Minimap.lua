@@ -22,4 +22,9 @@ function ns.InitMinimapButton()
   end
   db.minimapIcon.hide = db.hideMinimap and true or nil
   icon:Register(NAME, ns.brokerObject, db.minimapIcon)
+  -- also listed in the addon compartment (the addon bag at the top right of the minimap),
+  -- whether or not the minimap button is shown
+  if icon.AddButtonToCompartment and icon.IsButtonCompartmentAvailable and icon:IsButtonCompartmentAvailable() then
+    icon:AddButtonToCompartment(NAME)
+  end
 end
