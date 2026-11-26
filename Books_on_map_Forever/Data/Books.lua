@@ -54,7 +54,7 @@ ns.BOOKS = {
   { key = "conjurer", item = 220353, quest = 81956, set = 45, icon = "inv_misc_book_04", name = "Conjurer's Codex", locs = { { BLASTED, 55.4, 32.2, "Blasted Lands" } } },
 
   -- Level 60 set
-  { key = "magma", item = 228133, quest = 84396, set = 60, icon = "inv_misc_book_10", name = "Magma or Lava?", locs = { { BURNING, 29.6, 28.2, "Inside Blackrock Mountain, platform before the Blackrock Depths entrance (48.4, 63.6 on the mountain map)" } } },
+  { key = "magma", item = 228133, quest = 84396, set = 60, icon = "inv_misc_book_10", name = "Magma or Lava?", locs = { { BURNING, 26.1, 22.2, "Inside Blackrock Mountain, platform before the Blackrock Depths entrance (48.4, 63.6 on the mountain map)" } } },
   { key = "kalimdor", item = 228134, quest = 84397, set = 60, icon = "inv_misc_book_03", name = "Northern Kalimdor - A Comprehensive Guide", locs = { { FELWOOD, 65.2, 3.3, "Timbermaw Hold tunnel, Felwood" } } },
   { key = "undeadpotatoes", item = 228132, quest = 84395, set = 60, icon = "inv_misc_book_09", name = "Undead Potatoes", locs = { { WPL, 38.3, 54.6, "Felstone Field, Western Plaguelands" } } },
   { key = "knightlady", item = 228138, quest = 84400, set = 60, icon = "inv_misc_book_04", name = "The Knight and the Lady", locs = { { EPL, 47.3, 42.3, "Eastern Plaguelands" } } },

@@ -567,6 +567,12 @@ local function gameWindow(name, parent, width, height, title)
   end
   f.title:SetText(title or "")
 
+  -- the title strip: a drag handle (S.Draggable picks it up along with the title bar)
+  f.dragStrip = CreateFrame("Frame", nil, f)
+  f.dragStrip:SetPoint("TOPLEFT", 58, 0)
+  f.dragStrip:SetPoint("TOPRIGHT", -28, 0)
+  f.dragStrip:SetHeight(22)
+
   -- spellbook page, and the dark box the content sits in: drawn on the window itself, above the
   -- page and under every text (f.inset only places it: callers may move its bottom up to leave
   -- room for buttons on the page)
@@ -635,15 +641,22 @@ end
 function S.Draggable(f, handle, onStop)
   f:SetMovable(true)
   handle = handle or f
-  handle:EnableMouse(true)
-  handle:RegisterForDrag("LeftButton")
-  handle:SetScript("OnDragStart", function() S.StopTween(f); f:SetAlpha(1); f:StartMoving() end)
-  handle:SetScript("OnDragStop", function()
+  local function start() S.StopTween(f); f:SetAlpha(1); f:StartMoving() end
+  local function stop()
     f:StopMovingOrSizing()
     local p, rel, rp, x, y = f:GetPoint(1)
     f.home = { p, rel, rp, x, y }
     if onStop then onStop(f) end
-  end)
+  end
+  local handles = { handle }
+  -- Forever theme: the title strip along the top also moves the window
+  if handle == f.titleBar and f.dragStrip then handles[2] = f.dragStrip end
+  for _, h in ipairs(handles) do
+    h:EnableMouse(true)
+    h:RegisterForDrag("LeftButton")
+    h:SetScript("OnDragStart", start)
+    h:SetScript("OnDragStop", stop)
+  end
 end
 
 -- Section header: gold label, optional right text, rule fading to the right
